@@ -295,6 +295,7 @@ class automessageadmin {
 						} else {
 							echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
 						}
+
 						$this->handle_messageadmin_panel();
 						break;
 			case 'pauseaction':
