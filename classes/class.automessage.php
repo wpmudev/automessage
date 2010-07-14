@@ -1,6 +1,6 @@
 <?php
 
-class automessageadmin {
+class automessage {
 
 	var $build = 5;
 
@@ -64,7 +64,7 @@ class automessageadmin {
 		return true;
 	}
 
-	function automessageadmin() {
+	function automessage() {
 		$this->__construct();
 	}
 
