@@ -60,6 +60,36 @@ function automessage_db_prefix(&$wpdb, $table) {
 
 }
 
+function get_automessage_option($key, $default = false) {
+
+	if(defined( 'AUTOMESSSAGE_GLOBAL_TABLES' ) && AUTOMESSSAGE_GLOBAL_TABLES == true) {
+		return get_site_option($key, $default);
+	} else {
+		return get_option($key, $default);
+	}
+
+}
+
+function update_automessage_option($key, $value) {
+
+	if(defined( 'AUTOMESSSAGE_GLOBAL_TABLES' ) && AUTOMESSSAGE_GLOBAL_TABLES == true) {
+		return update_site_option($key, $value);
+	} else {
+		return update_option($key, $value);
+	}
+
+}
+
+function delete_automessage_option($key) {
+
+	if(defined( 'AUTOMESSSAGE_GLOBAL_TABLES' ) && AUTOMESSSAGE_GLOBAL_TABLES == true) {
+		return delete_site_option($key);
+	} else {
+		return delete_option($key);
+	}
+
+}
+
 function process_automessage() {
 	global $automsg, $wpdb;
 

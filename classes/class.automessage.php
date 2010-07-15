@@ -31,7 +31,7 @@ class automessage {
 		}
 
 		// Installation functions
-		$installed = get_site_option('automessage_installed', false);
+		$installed = get_automessage_option('automessage_installed', false);
 		if($installed != $this->build) {
 			$this->install();
 		}
@@ -139,7 +139,7 @@ class automessage {
 
 		}
 
-		update_site_option('automessage_installed', $this->build);
+		update_automessage_option('automessage_installed', $this->build);
 
 		$this->flush_rewrite();
 
@@ -152,11 +152,6 @@ class automessage {
 	function setup_listeners() {
 
 		global $blog_id;
-
-		// Check we are installed
-		if(get_site_option('automessage_installed', 'no') != 'yes') {
-			$this->install();
-		}
 
 		// This function will add all of the actions that are setup
 
@@ -968,7 +963,7 @@ class automessage {
 
 		$tstamp = time();
 
-		$lastrun = get_option('automessage_lastrunon', 1);
+		$lastrun = get_automessage_option('automessage_lastrunon', 1);
 
 		// Get the queued items that should have been processed by now
 		$sql = $this->db->prepare( "SELECT q.*, s.subject, s.message, s.period, s.timeperiod, s.action_id  FROM {$this->am_queue} AS q, {$this->am_schedule} AS s, {$this->am_actions} AS a
@@ -996,13 +991,13 @@ class automessage {
 				// delete the now processed item
 				$this->db->query($this->db->prepare("DELETE FROM {$this->am_queue} WHERE id = %d", $q->id));
 			}
-			update_option('automessage_lastrunon', $lastrun);
+			update_automessage_option('automessage_lastrunon', $lastrun);
 		}
 	}
 
 	function force_process($schedule_id) {
 
-		$lastrun = get_option('automessage_lastrunon', 1);
+		$lastrun = get_automessage_option('automessage_lastrunon', 1);
 
 		$sql = $this->db->prepare( "SELECT q.*, s.subject, s.message, s.period, s.timeperiod, s.action_id  FROM {$this->am_queue} AS q, {$this->am_schedule} AS s, {$this->am_actions} AS a
 		WHERE q.schedule_id = s.id AND a.id = s.action_id
@@ -1027,7 +1022,7 @@ class automessage {
 				// delete the now processed item
 				$this->db->query($this->db->prepare("DELETE FROM {$this->am_queue} WHERE id = %d", $q->id));
 			}
-			update_option('automessage_lastrunon', $lastrun);
+			update_automessage_option('automessage_lastrunon', $lastrun);
 		}
 
 	}
