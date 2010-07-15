@@ -27,12 +27,14 @@ class automessage {
 
 		// Set up the table variables
 		foreach($this->tables as $table) {
-			$this->$table = $this->db->base_prefix . $table;
+			$this->$table = automessage_db_prefix($this->db, $table);
 		}
 
 		// Installation functions
-		register_activation_hook(__FILE__, array(&$this, 'install'));
-		register_deactivation_hook(__FILE__, array(&$this, 'uninstall'));
+		$installed = get_site_option('automessage_installed', false);
+		if($installed != $this->build) {
+			$this->install();
+		}
 
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
@@ -41,7 +43,7 @@ class automessage {
 
 		add_action('init', array(&$this,'setup_listeners'));
 
-		if($blog_id == 1) {
+		if($blog_id == 1 || !is_multisite()) {
 			// All the following actions we only want on the main blog
 
 			// Cron actions
@@ -70,7 +72,7 @@ class automessage {
 
 	function setup_menu() {
 
-		if(function_exists('is_multisite') && is_multisite()) {
+		if(is_multisite()) {
 			add_submenu_page('ms-admin.php', __('Messages','automessage'), __('Messages','automessage'), 'manage_options', "automessages", array(&$this,'handle_messageadmin_panel'));
 		} else {
 			add_submenu_page('tools.php', __('Messages','automessage'), __('Messages','automessage'), 'manage_options', "automessages", array(&$this,'handle_messageadmin_panel'));
@@ -78,13 +80,11 @@ class automessage {
 
 	}
 
-	function install() {
+	function install($install = false) {
 
-		$table_name = $this->am_actions;
-		if($this->db->get_var("show tables like '$table_name'") != $table_name)
-   		{
+		if($install == false) {
+
 			// Create or update the tables
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
 			$sql = "CREATE TABLE $this->am_actions (
 			  id bigint(20) NOT NULL auto_increment,
@@ -96,7 +96,7 @@ class automessage {
 			  KEY level (level),
 			  KEY action (action)
 			)";
-			dbDelta($sql);
+			$this->db->query($sql);
 
 			$sql = "CREATE TABLE $this->am_schedule (
 			  id bigint(20) NOT NULL auto_increment,
@@ -115,7 +115,7 @@ class automessage {
 			  KEY blog_id (blog_id),
 			  KEY action_id (action_id)
 			)";
-			dbDelta($sql);
+			$this->db->query($sql);
 
 			$sql = "CREATE TABLE $this->am_queue (
 			  id bigint(20) NOT NULL auto_increment,
@@ -132,13 +132,14 @@ class automessage {
 			  KEY blog_id (blog_id),
 			  KEY site_id (site_id)
 			)";
-			dbDelta($sql);
+			$this->db->query($sql);
 
 			$this->db->insert($this->am_actions, array("level" => "site", "action" => "wpmu_new_blog", "title" => "Create new blog"));
 			$this->db->insert($this->am_actions, array("level" => "blog", "action" => "wpmu_new_user", "title" => "Create new user"));
 
-			update_site_option('automessage_installed', 'yes');
-   		}
+		}
+
+		update_site_option('automessage_installed', $this->build);
 
 		$this->flush_rewrite();
 

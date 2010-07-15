@@ -26,9 +26,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-require_once('classes/automessageadmin.php');
-require_once('classes/functions.php');
+// Load the libraries
+require_once('includes/config.php');
+require_once('includes/functions.php');
+require_once('classes/class.automessage.php');
+// Set up our location
+set_automessage_url(__FILE__);
+set_automessage_dir(__FILE__);
 
-$automsg =& new automessageadmin();
+// Instantiate the class
+$automsg =& new automessage();
 
 ?>
