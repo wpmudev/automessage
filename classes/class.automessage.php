@@ -36,12 +36,16 @@ class automessage {
 			$this->install();
 		}
 
+		add_action( 'init', array($this, 'initialise_plugin'));
+
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
-		add_action('load-ms-admin_page_automessages', array(&$this, 'add_admin_header_automessages'));
-		add_action('load-tools_page_automessages', array(&$this, 'add_admin_header_automessages'));
+		add_action('load-toplevel_page_automessage', array(&$this, 'add_admin_header_automessage_dash'));
+		add_action('load-automessages_page_automessage_admin', array(&$this, 'add_admin_header_automessage_admin'));
 
 		add_action('init', array(&$this,'setup_listeners'));
+
+		add_action( 'automessage_dashboard_left', array(&$this, 'dashboard_news') );
 
 		if($blog_id == 1 || !is_multisite()) {
 			// All the following actions we only want on the main blog
@@ -70,13 +74,52 @@ class automessage {
 		$this->__construct();
 	}
 
+	function initialise_plugin() {
+
+		$role = get_role( 'administrator' );
+		if( !$role->has_cap( 'read_automessage' ) ) {
+			// Administrator
+			$role->add_cap( 'read_automessage' );
+			$role->add_cap( 'edit_automessage' );
+			$role->add_cap( 'delete_automessage' );
+			$role->add_cap( 'publish_automessages' );
+			$role->add_cap( 'edit_automessages' );
+			$role->add_cap( 'edit_others_automessages' );
+		}
+
+		// Register the property post type
+		register_post_type('automessage', array(	'singular_label' => __('Messages','automessage'),
+													'label' => __('Messages', 'automessage'),
+													'public' => false,
+													'show_ui' => false,
+													'publicly_queryable' => false,
+													'exclude_from_search' => true,
+													'hierarchical' => true,
+													'capability_type' => 'automessage',
+													'edit_cap' => 'edit_automessage',
+													'edit_type_cap' => 'edit_automessages',
+													'edit_others_cap' => 'edit_others_automessages',
+													'publish_others_cap' => 'publish_automessages',
+													'read_cap' => 'read_automessage',
+													'delete_cap' => 'delete_automessage'
+													)
+												);
+	}
+
 	function setup_menu() {
 
-		if(is_multisite()) {
-			add_submenu_page('ms-admin.php', __('Messages','automessage'), __('Messages','automessage'), 'manage_options', "automessages", array(&$this,'handle_messageadmin_panel'));
-		} else {
-			add_submenu_page('tools.php', __('Messages','automessage'), __('Messages','automessage'), 'manage_options', "automessages", array(&$this,'handle_messageadmin_panel'));
+		global $menu, $admin_page_hooks;
+
+		add_menu_page(__('Automessage','automessage'), __('Automessage','automessage'), 'edit_automessage',  'automessage', array(&$this,'handle_dash_panel'));
+
+		// Fix WP translation hook issue
+		if(isset($admin_page_hooks['automessages'])) {
+			$admin_page_hooks['automessages'] = 'automessages';
 		}
+
+		// Add the sub menu
+		add_submenu_page('automessage', __('Edit messages','automessage'), __('Edit messages','automessage'), 'edit_automessage', "automessage_admin", array(&$this,'handle_messageadmin_panel'));
+		//add_submenu_page('automessages', __('Edit Options','automessage'), __('Edit Options','automessage'), 'manage_options', "automessage_options", array(&$this,'handle_options_page'));
 
 	}
 
@@ -146,6 +189,127 @@ class automessage {
 	}
 
 	function uninstall() {
+
+	}
+
+	function add_admin_header_automessage_core() {
+
+		global $action, $page;
+
+		wp_reset_vars( array('action', 'page') );
+
+		wp_enqueue_style( 'automessageadmincss', automessage_url('css/automessage.css'), array(), $this->build );
+	}
+
+	function add_admin_header_automessage_dash() {
+
+		global $action, $page;
+
+		$this->add_admin_header_automessage_core();
+	}
+
+	function add_admin_header_automessage_admin() {
+
+		global $action, $page;
+
+		$this->add_admin_header_automessage_core();
+
+		switch($action) {
+
+			case 'addaction':
+						check_admin_referer('add-action');
+						if($this->add_action()) {
+							echo '<div id="message" class="updated fade"><p>' . __('Your action has been added to the schedule.', 'automessage') . '</p></div>';
+						} else {
+							echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
+						}
+
+						$this->handle_messageadmin_panel();
+						break;
+			case 'pauseaction':
+						$id = addslashes($_GET['id']);
+						$this->set_pause($id, true);
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been paused', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'unpauseaction':
+						$id = addslashes($_GET['id']);
+						$this->set_pause($id, false);
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been unpaused', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'allmessages':
+						check_admin_referer($_POST['actioncheck']);
+						if(isset($_POST['allaction_delete'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->delete_action($as);
+								}
+							} else {
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to delete', 'automessage') . '</p></div>';
+							}
+						}
+						if(isset($_POST['allaction_pause'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->set_pause($as, true);
+								}
+								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been paused', 'automessage') . '</p></div>';
+							} else {
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to pause', 'automessage') . '</p></div>';
+							}
+						}
+						if(isset($_POST['allaction_unpause'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->set_pause($as, false);
+								}
+								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been unpaused', 'automessage') . '</p></div>';
+							} else {
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to unpause', 'automessage') . '</p></div>';
+							}
+						}
+						if(isset($_POST['allaction_process'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->force_process($as);
+								}
+								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been processed', 'automessage') . '</p></div>';
+							} else {
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to process', 'automessage') . '</p></div>';
+							}
+						}
+						$this->handle_messageadmin_panel();
+						break;
+			case 'deleteaction':
+						$id = addslashes($_GET['id']);
+						$this->delete_action($id);
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been deleted', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'editaction':
+						$id = addslashes($_GET['id']);
+						$this->edit_action_form($id);
+						break;
+			case 'updateaction':
+						check_admin_referer('update-action');
+						$this->update_action();
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been updated', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'processaction':
+						$id = addslashes($_GET['id']);
+						$this->force_process($id);
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been processed', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+
+		}
+
 
 	}
 
@@ -276,110 +440,7 @@ class automessage {
 		}
 	}
 
-	function add_admin_header_automessages() {
 
-		global $action, $page;
-
-		wp_reset_vars( array('action', 'page') );
-
-		switch($action) {
-
-			case 'addaction':
-						check_admin_referer('add-action');
-						if($this->add_action()) {
-							echo '<div id="message" class="updated fade"><p>' . __('Your action has been added to the schedule.', 'automessage') . '</p></div>';
-						} else {
-							echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
-						}
-
-						$this->handle_messageadmin_panel();
-						break;
-			case 'pauseaction':
-						$id = addslashes($_GET['id']);
-						$this->set_pause($id, true);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been paused', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
-						break;
-			case 'unpauseaction':
-						$id = addslashes($_GET['id']);
-						$this->set_pause($id, false);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been unpaused', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
-						break;
-			case 'allmessages':
-						check_admin_referer($_POST['actioncheck']);
-						if(isset($_POST['allaction_delete'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->delete_action($as);
-								}
-							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to delete', 'automessage') . '</p></div>';
-							}
-						}
-						if(isset($_POST['allaction_pause'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->set_pause($as, true);
-								}
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been paused', 'automessage') . '</p></div>';
-							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to pause', 'automessage') . '</p></div>';
-							}
-						}
-						if(isset($_POST['allaction_unpause'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->set_pause($as, false);
-								}
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been unpaused', 'automessage') . '</p></div>';
-							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to unpause', 'automessage') . '</p></div>';
-							}
-						}
-						if(isset($_POST['allaction_process'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->force_process($as);
-								}
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been processed', 'automessage') . '</p></div>';
-							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to process', 'automessage') . '</p></div>';
-							}
-						}
-						$this->handle_messageadmin_panel();
-						break;
-			case 'deleteaction':
-						$id = addslashes($_GET['id']);
-						$this->delete_action($id);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been deleted', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
-						break;
-			case 'editaction':
-						$id = addslashes($_GET['id']);
-						$this->edit_action_form($id);
-						break;
-			case 'updateaction':
-						check_admin_referer('update-action');
-						$this->update_action();
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been updated', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
-						break;
-			case 'processaction':
-						$id = addslashes($_GET['id']);
-						$this->force_process($id);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been processed', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
-						break;
-
-		}
-
-
-	}
 
 
 	function get_sitelevel_schedule() {
@@ -858,6 +919,81 @@ class automessage {
 
 	}
 
+	function dashboard_news() {
+		global $page, $action;
+
+		$plugin = get_plugin_data(automessage_dir('automessage.php'));
+
+		$debug = get_automessage_option('automessage_debug', false);
+
+		?>
+		<div class="postbox " id="dashboard_right_now">
+			<h3 class="hndle"><span><?php _e('Automessage','automessage'); ?></span></h3>
+			<div class="inside">
+				<?php
+				echo "<p>";
+				echo __('You are running Automessage version ','automessage') . "<strong>" . $plugin['Version'] . '</strong>';
+				echo "</p>";
+
+				echo "<p>";
+				echo __('Debug mode is ','automessage') . "<strong>";
+				if($debug) {
+					echo __('Enabled','automessage');
+				} else {
+					echo __('Disabled','automessage');
+				}
+				echo '</strong>';
+				echo "</p>";
+				?>
+				<br class="clear">
+			</div>
+		</div>
+		<?php
+	}
+
+	function handle_dash_panel() {
+		?>
+		<div class='wrap nosubsub'>
+			<div class="icon32" id="icon-index"><br></div>
+			<h2><?php _e('Automessage dashboard','automessage'); ?></h2>
+
+			<div id="dashboard-widgets-wrap">
+
+			<div class="metabox-holder" id="dashboard-widgets">
+				<div style="width: 49%;" class="postbox-container">
+					<div class="meta-box-sortables ui-sortable" id="normal-sortables">
+						<?php
+						do_action( 'automessage_dashboard_left' );
+						?>
+					</div>
+				</div>
+
+				<div style="width: 49%;" class="postbox-container">
+					<div class="meta-box-sortables ui-sortable" id="side-sortables">
+						<?php
+						do_action( 'automessage_dashboard_right' );
+						?>
+					</div>
+				</div>
+
+				<div style="display: none; width: 49%;" class="postbox-container">
+					<div class="meta-box-sortables ui-sortable" id="column3-sortables" style="">
+					</div>
+				</div>
+
+				<div style="display: none; width: 49%;" class="postbox-container">
+					<div class="meta-box-sortables ui-sortable" id="column4-sortables" style="">
+					</div>
+				</div>
+			</div>
+
+			<div class="clear"></div>
+			</div>
+
+		</div> <!-- wrap -->
+		<?php
+	}
+
 	function handle_messageadmin_panel() {
 
 		global $action, $page;
@@ -1033,7 +1169,7 @@ class automessage {
 
 		global $wp_rewrite;
 
-		$wp_rewrite->flush_rules();
+		//$wp_rewrite->flush_rules();
 
 	}
 
