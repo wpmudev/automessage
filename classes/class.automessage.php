@@ -218,35 +218,25 @@ class automessage {
 
 		$this->add_admin_header_automessage_core();
 
-		if(empty($action))
-
 		switch($action) {
 
 			case 'addaction':
 						check_admin_referer('add-action');
 						if($this->add_action()) {
 							wp_safe_redirect( add_query_arg( 'msg', 1, wp_get_original_referer() ) );
-							echo '<div id="message" class="updated fade"><p>' . __('Your action has been added to the schedule.', 'automessage') . '</p></div>';
 						} else {
 							wp_safe_redirect( add_query_arg( 'msg', 2, wp_get_original_referer() ) );
-							echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
 						}
-
-						$this->handle_messageadmin_panel();
 						break;
 			case 'pauseaction':
 						$id = addslashes($_GET['id']);
 						$this->set_pause($id, true);
 						wp_safe_redirect( add_query_arg( 'msg', 3, wp_get_original_referer() ) );
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been paused', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
 						break;
 			case 'unpauseaction':
 						$id = addslashes($_GET['id']);
 						$this->set_pause($id, false);
 						wp_safe_redirect( add_query_arg( 'msg', 4, wp_get_original_referer() ) );
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been unpaused', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
 						break;
 			case 'allmessages':
 						check_admin_referer($_POST['actioncheck']);
@@ -256,9 +246,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->delete_action($as);
 								}
+								wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
 							} else {
 								wp_safe_redirect( add_query_arg( 'msg', 5, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to delete', 'automessage') . '</p></div>';
 							}
 						}
 						if(isset($_POST['allaction_pause'])) {
@@ -268,10 +258,8 @@ class automessage {
 									$this->set_pause($as, true);
 								}
 								wp_safe_redirect( add_query_arg( 'msg', 6, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been paused', 'automessage') . '</p></div>';
 							} else {
 								wp_safe_redirect( add_query_arg( 'msg', 7, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to pause', 'automessage') . '</p></div>';
 							}
 						}
 						if(isset($_POST['allaction_unpause'])) {
@@ -281,10 +269,8 @@ class automessage {
 									$this->set_pause($as, false);
 								}
 								wp_safe_redirect( add_query_arg( 'msg', 8, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been unpaused', 'automessage') . '</p></div>';
 							} else {
 								wp_safe_redirect( add_query_arg( 'msg', 9, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to unpause', 'automessage') . '</p></div>';
 							}
 						}
 						if(isset($_POST['allaction_process'])) {
@@ -294,10 +280,8 @@ class automessage {
 									$this->force_process($as);
 								}
 								wp_safe_redirect( add_query_arg( 'msg', 10, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been processed', 'automessage') . '</p></div>';
 							} else {
 								wp_safe_redirect( add_query_arg( 'msg', 11, wp_get_original_referer() ) );
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to process', 'automessage') . '</p></div>';
 							}
 						}
 						$this->handle_messageadmin_panel();
@@ -306,8 +290,6 @@ class automessage {
 						$id = addslashes($_GET['id']);
 						$this->delete_action($id);
 						wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been deleted', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
 						break;
 			case 'editaction':
 						$id = addslashes($_GET['id']);
@@ -317,15 +299,11 @@ class automessage {
 						check_admin_referer('update-action');
 						$this->update_action();
 						wp_safe_redirect( add_query_arg( 'msg', 13, wp_get_original_referer() ) );
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been updated', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
 						break;
 			case 'processaction':
 						$id = addslashes($_GET['id']);
 						$this->force_process($id);
 						wp_safe_redirect( add_query_arg( 'msg', 14, wp_get_original_referer() ) );
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been processed', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
 						break;
 
 			default:	// do nothing and carry on
@@ -347,24 +325,20 @@ class automessage {
 			case 'addaction':
 						check_admin_referer('add-action');
 						if($this->add_action()) {
-							echo '<div id="message" class="updated fade"><p>' . __('Your action has been added to the schedule.', 'automessage') . '</p></div>';
+							wp_safe_redirect( add_query_arg( 'msg', 1, wp_get_original_referer() ) );
 						} else {
-							echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
+							wp_safe_redirect( add_query_arg( 'msg', 2, wp_get_original_referer() ) );
 						}
-
-						$this->handle_messageadmin_panel();
 						break;
 			case 'pauseaction':
 						$id = addslashes($_GET['id']);
 						$this->set_pause($id, true);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been paused', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
+						wp_safe_redirect( add_query_arg( 'msg', 3, wp_get_original_referer() ) );
 						break;
 			case 'unpauseaction':
 						$id = addslashes($_GET['id']);
 						$this->set_pause($id, false);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been unpaused', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
+						wp_safe_redirect( add_query_arg( 'msg', 4, wp_get_original_referer() ) );
 						break;
 			case 'allmessages':
 						check_admin_referer($_POST['actioncheck']);
@@ -374,8 +348,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->delete_action($as);
 								}
+								wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
 							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to delete', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 5, wp_get_original_referer() ) );
 							}
 						}
 						if(isset($_POST['allaction_pause'])) {
@@ -384,9 +359,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->set_pause($as, true);
 								}
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been paused', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 6, wp_get_original_referer() ) );
 							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to pause', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 7, wp_get_original_referer() ) );
 							}
 						}
 						if(isset($_POST['allaction_unpause'])) {
@@ -395,9 +370,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->set_pause($as, false);
 								}
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been unpaused', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 8, wp_get_original_referer() ) );
 							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to unpause', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 9, wp_get_original_referer() ) );
 							}
 						}
 						if(isset($_POST['allaction_process'])) {
@@ -406,9 +381,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->force_process($as);
 								}
-								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been processed', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 10, wp_get_original_referer() ) );
 							} else {
-								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to process', 'automessage') . '</p></div>';
+								wp_safe_redirect( add_query_arg( 'msg', 11, wp_get_original_referer() ) );
 							}
 						}
 						$this->handle_messageadmin_panel();
@@ -416,8 +391,7 @@ class automessage {
 			case 'deleteaction':
 						$id = addslashes($_GET['id']);
 						$this->delete_action($id);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been deleted', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
+						wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
 						break;
 			case 'editaction':
 						$id = addslashes($_GET['id']);
@@ -426,14 +400,15 @@ class automessage {
 			case 'updateaction':
 						check_admin_referer('update-action');
 						$this->update_action();
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been updated', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
+						wp_safe_redirect( add_query_arg( 'msg', 13, wp_get_original_referer() ) );
 						break;
 			case 'processaction':
 						$id = addslashes($_GET['id']);
 						$this->force_process($id);
-						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been processed', 'automessage') . '</p></div>';
-						$this->handle_messageadmin_panel();
+						wp_safe_redirect( add_query_arg( 'msg', 14, wp_get_original_referer() ) );
+						break;
+
+			default:	// do nothing and carry on
 						break;
 
 		}
@@ -1181,12 +1156,86 @@ class automessage {
 		<?php
 	}
 
-	function handle_messageadmin_panel() {
+	function handle_blogmessageadmin_panel() {
 
 		global $action, $page;
 
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo "<h2>" . __('Message responses','automessage') . "</h2>";
+
+		$this->show_admin_messages();
+
+		echo '<ul class="subsubsub">';
+		echo '<li><a href="#form-add-action" class="rbutton"><strong>' . __('Add a new action', 'automessage') . '</strong></a></li>';
+		echo '</ul>';
+		echo '<br clear="all" />';
+
+		// Site level messages - if we are at a site level
+		if(function_exists('is_site_admin') && is_site_admin()) {
+
+			echo "<h3>" . __('Site level actions','automessage') . "</h3>";
+
+			$results = $this->get_sitelevel_schedule();
+
+			echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
+			echo '<input type="hidden" name="page" value="' . $page . '" />';
+			echo '<input type="hidden" name="actioncheck" value="allsiteactions" />';
+			echo '<div class="tablenav">';
+			echo '<div class="alignleft">';
+
+			echo '<input type="submit" value="' . __('Delete') . '" name="allaction_delete" class="button-secondary delete" />';
+			echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
+			echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
+			echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
+			wp_nonce_field( 'allsiteactions' );
+			echo '<br class="clear" />';
+			echo '</div>';
+			echo '</div>';
+
+			$this->show_actions_list($results);
+
+			echo "</form>";
+		}
+
+		// Blog level messages
+		echo "<h3>" . __('Blog level actions','automessage') . "</h3>";
+
+		$results = $this->get_bloglevel_schedule();
+
+		echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
+		echo '<input type="hidden" name="page" value="' . $page . '" />';
+		echo '<input type="hidden" name="actioncheck" value="allblogactions" />';
+		echo '<div class="tablenav">';
+		echo '<div class="alignleft">';
+
+		echo '<input type="submit" value="' . __('Delete') . '" name="allaction_delete" class="button-secondary delete" />';
+		echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
+		echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
+		wp_nonce_field( 'allblogactions' );
+		echo '<br class="clear" />';
+		echo '</div>';
+		echo '</div>';
+
+		if(apply_filters('automessage_add_action', true))
+			$this->show_actions_list($results);
+
+		echo "</form>";
+
+		echo "</div>";
+
+		$this->add_action_form();
+
+	}
+
+	function handle_usermessageadmin_panel() {
+
+		global $action, $page;
+
+		echo "<div class='wrap'  style='position:relative;'>";
+		echo "<h2>" . __('Message responses','automessage') . "</h2>";
+
+		$this->show_admin_messages();
 
 		echo '<ul class="subsubsub">';
 		echo '<li><a href="#form-add-action" class="rbutton"><strong>' . __('Add a new action', 'automessage') . '</strong></a></li>';
