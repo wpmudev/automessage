@@ -41,7 +41,8 @@ class automessage {
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
 		add_action('load-toplevel_page_automessage', array(&$this, 'add_admin_header_automessage_dash'));
-		add_action('load-automessages_page_automessage_admin', array(&$this, 'add_admin_header_automessage_admin'));
+		add_action('load-automessages_page_automessage_blogadmin', array(&$this, 'add_admin_header_automessage_blogadmin'));
+		add_action('load-automessages_page_automessage_useradmin', array(&$this, 'add_admin_header_automessage_useradmin'));
 
 		add_action('init', array(&$this,'setup_listeners'));
 
@@ -118,8 +119,11 @@ class automessage {
 		}
 
 		// Add the sub menu
-		add_submenu_page('automessage', __('Edit messages','automessage'), __('Edit messages','automessage'), 'edit_automessage', "automessage_admin", array(&$this,'handle_messageadmin_panel'));
-		//add_submenu_page('automessages', __('Edit Options','automessage'), __('Edit Options','automessage'), 'manage_options', "automessage_options", array(&$this,'handle_options_page'));
+		if(function_exists('is_site_admin') && is_site_admin()) {
+			add_submenu_page('automessage', __('Edit Blog Messages','automessage'), __('Blog Level Messages','automessage'), 'edit_automessage', "automessage_blogadmin", array(&$this,'handle_blogmessageadmin_panel'));
+		}
+
+		add_submenu_page('automessage', __('Edit User Messages','automessage'), __('User Level Messages','automessage'), 'edit_automessage', "automessage_useradmin", array(&$this,'handle_usermessageadmin_panel'));
 
 	}
 
@@ -208,7 +212,131 @@ class automessage {
 		$this->add_admin_header_automessage_core();
 	}
 
-	function add_admin_header_automessage_admin() {
+	function add_admin_header_automessage_blogadmin() {
+
+		global $action, $page;
+
+		$this->add_admin_header_automessage_core();
+
+		if(empty($action))
+
+		switch($action) {
+
+			case 'addaction':
+						check_admin_referer('add-action');
+						if($this->add_action()) {
+							wp_safe_redirect( add_query_arg( 'msg', 1, wp_get_original_referer() ) );
+							echo '<div id="message" class="updated fade"><p>' . __('Your action has been added to the schedule.', 'automessage') . '</p></div>';
+						} else {
+							wp_safe_redirect( add_query_arg( 'msg', 2, wp_get_original_referer() ) );
+							echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
+						}
+
+						$this->handle_messageadmin_panel();
+						break;
+			case 'pauseaction':
+						$id = addslashes($_GET['id']);
+						$this->set_pause($id, true);
+						wp_safe_redirect( add_query_arg( 'msg', 3, wp_get_original_referer() ) );
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been paused', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'unpauseaction':
+						$id = addslashes($_GET['id']);
+						$this->set_pause($id, false);
+						wp_safe_redirect( add_query_arg( 'msg', 4, wp_get_original_referer() ) );
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been unpaused', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'allmessages':
+						check_admin_referer($_POST['actioncheck']);
+						if(isset($_POST['allaction_delete'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->delete_action($as);
+								}
+							} else {
+								wp_safe_redirect( add_query_arg( 'msg', 5, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to delete', 'automessage') . '</p></div>';
+							}
+						}
+						if(isset($_POST['allaction_pause'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->set_pause($as, true);
+								}
+								wp_safe_redirect( add_query_arg( 'msg', 6, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been paused', 'automessage') . '</p></div>';
+							} else {
+								wp_safe_redirect( add_query_arg( 'msg', 7, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to pause', 'automessage') . '</p></div>';
+							}
+						}
+						if(isset($_POST['allaction_unpause'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->set_pause($as, false);
+								}
+								wp_safe_redirect( add_query_arg( 'msg', 8, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been unpaused', 'automessage') . '</p></div>';
+							} else {
+								wp_safe_redirect( add_query_arg( 'msg', 9, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to unpause', 'automessage') . '</p></div>';
+							}
+						}
+						if(isset($_POST['allaction_process'])) {
+							if(isset($_POST['allschedules'])) {
+								$allsscheds = $_POST['allschedules'];
+								foreach ($allsscheds as $as) {
+									$this->force_process($as);
+								}
+								wp_safe_redirect( add_query_arg( 'msg', 10, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been processed', 'automessage') . '</p></div>';
+							} else {
+								wp_safe_redirect( add_query_arg( 'msg', 11, wp_get_original_referer() ) );
+								echo '<div id="message" class="updated fade"><p>' . __('Please select an action to process', 'automessage') . '</p></div>';
+							}
+						}
+						$this->handle_messageadmin_panel();
+						break;
+			case 'deleteaction':
+						$id = addslashes($_GET['id']);
+						$this->delete_action($id);
+						wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been deleted', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'editaction':
+						$id = addslashes($_GET['id']);
+						$this->edit_action_form($id);
+						break;
+			case 'updateaction':
+						check_admin_referer('update-action');
+						$this->update_action();
+						wp_safe_redirect( add_query_arg( 'msg', 13, wp_get_original_referer() ) );
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been updated', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+			case 'processaction':
+						$id = addslashes($_GET['id']);
+						$this->force_process($id);
+						wp_safe_redirect( add_query_arg( 'msg', 14, wp_get_original_referer() ) );
+						echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been processed', 'automessage') . '</p></div>';
+						$this->handle_messageadmin_panel();
+						break;
+
+			default:	// do nothing and carry on
+						break;
+
+		}
+
+
+	}
+
+	function add_admin_header_automessage_useradmin() {
 
 		global $action, $page;
 
@@ -311,6 +439,65 @@ class automessage {
 		}
 
 
+	}
+
+	function show_admin_messages() {
+
+		global $action, $page, $msg;
+
+		$this->add_admin_header_automessage_core();
+
+		if(isset($_GET['msg'])) {
+
+			$msg = (int) $_GET['msg'];
+
+			switch($msg) {
+				case 1:		echo '<div id="message" class="updated fade"><p>' . __('Your action has been added to the schedule.', 'automessage') . '</p></div>';
+							break;
+
+				case 2:		echo '<div id="message" class="updated fade"><p>' . __('Your action could not be added.', 'automessage') . '</p></div>';
+							break;
+
+				case 3:		echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been paused', 'automessage') . '</p></div>';
+							break;
+
+				case 4:		echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been unpaused', 'automessage') . '</p></div>';
+							break;
+
+				case 5:		echo '<div id="message" class="updated fade"><p>' . __('Please select an action to delete', 'automessage') . '</p></div>';
+							break;
+
+				case 6:		echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been paused', 'automessage') . '</p></div>';
+							break;
+
+				case 7:		echo '<div id="message" class="updated fade"><p>' . __('Please select an action to pause', 'automessage') . '</p></div>';
+							break;
+
+				case 8:		echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been unpaused', 'automessage') . '</p></div>';
+							break;
+
+				case 9:		echo '<div id="message" class="updated fade"><p>' . __('Please select an action to unpause', 'automessage') . '</p></div>';
+							break;
+
+				case 10:	echo '<div id="message" class="updated fade"><p>' . __('The scheduled actions have been processed', 'automessage') . '</p></div>';
+							break;
+
+				case 11:	echo '<div id="message" class="updated fade"><p>' . __('Please select an action to process', 'automessage') . '</p></div>';
+							break;
+
+				case 12:	echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been deleted', 'automessage') . '</p></div>';
+							break;
+
+				case 13:	echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been updated', 'automessage') . '</p></div>';
+							break;
+
+				case 14:	echo '<div id="message" class="updated fade"><p>' . __('The scheduled action has been processed', 'automessage') . '</p></div>';
+							break;
+
+			}
+
+			$_SERVER['REQUEST_URI'] = remove_query_arg(array('msg'), $_SERVER['REQUEST_URI']);
+		}
 	}
 
 	function setup_listeners() {
