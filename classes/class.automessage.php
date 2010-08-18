@@ -41,8 +41,8 @@ class automessage {
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
 		add_action('load-toplevel_page_automessage', array(&$this, 'add_admin_header_automessage_dash'));
-		add_action('load-automessages_page_automessage_blogadmin', array(&$this, 'add_admin_header_automessage_blogadmin'));
-		add_action('load-automessages_page_automessage_useradmin', array(&$this, 'add_admin_header_automessage_useradmin'));
+		add_action('load-automessage_page_automessage_blogadmin', array(&$this, 'add_admin_header_automessage_blogadmin'));
+		add_action('load-automessage_page_automessage_useradmin', array(&$this, 'add_admin_header_automessage_useradmin'));
 
 		add_action('init', array(&$this,'setup_listeners'));
 
@@ -229,7 +229,6 @@ class automessage {
 		$this->add_admin_header_automessage_core();
 
 		$this->process_admin_updates();
-
 	}
 
 	function process_admin_updates() {
@@ -563,7 +562,7 @@ class automessage {
 		}
 
 		$args = array(
-			'post_type' => 'contact',
+			'post_type' => 'automessage',
 			'post_status' => $type,
 			'meta_key' => '_automessage_level',
 			'orderby' => 'post_modified',
@@ -592,8 +591,37 @@ class automessage {
 
 	function add_action() {
 
-		global $current_site;
+		$action = $_POST['action'];
+		$subject = $_POST['subject'];
+		$message = $_POST['message'];
 
+		$period = $_POST['period'];
+		$timeperiod = $_POST['timeperiod'];
+
+		$post = array(
+		'post_title' => $subject,
+		'post_content' => $message,
+		'post_name' => sanitize_title($subject),
+		'post_status' => 'private', // You can also make this pending, or whatever you want, really.
+		'post_author' => $this->user_id,
+		'post_category' => array(get_option('default_category')),
+		'post_type' => 'automessage',
+		'comment_status' => 'closed'
+		);
+
+		// update the post
+		$message_id = wp_insert_post($post);
+
+		if(!is_wp_error($message_id)) {
+			update_metadata('post', $message_id, '_automessage_action', $action);
+			update_metadata('post', $message_id, '_automessage_level', 'blog');
+			update_metadata('post', $message_id, '_automessage_period', $period);
+			update_metadata('post', $message_id, '_automessage_timeperiod', $timeperiod);
+		}
+
+		return $message_id;
+
+		/*
 		$system_id = apply_filters('get_system_id', 1);
 		$site_id = $current_site->id;
 		$blog_id = $current_site->blog_id;
@@ -609,6 +637,7 @@ class automessage {
 		$this->db->insert($this->am_schedule, array("system_id" => $system_id, "site_id" => $site_id, "blog_id" => $blog_id, "action_id" => $action, "subject" => $subject, "message" => $message, "period" => $period, "timeperiod" => $timeperiod));
 
 		return $this->db->insert_id;
+		*/
 	}
 
 	function delete_action($scheduleid) {
@@ -658,6 +687,7 @@ class automessage {
 
 		if(!$editing) {
 			$this->add_action_form();
+			return;
 		}
 
 		echo "<div class='wrap'>";
@@ -1071,7 +1101,9 @@ class automessage {
 
 		global $action, $page;
 
-		if(!empty($action) && ($action == 'editaction' || $action == 'addaction') ) {
+		wp_reset_vars( array('action', 'page') );
+
+		if(!empty($action) && ($action == 'editaction' || $action == 'newaction') ) {
 			$id = addslashes($_GET['id']);
 			$this->edit_action_form($id);
 			return;
@@ -1080,7 +1112,7 @@ class automessage {
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('Blog Level Messages','automessage');
-		echo '<a class="button add-new-h2" href="">Add New</a>';
+		echo '<a class="button add-new-h2" href="' . add_query_arg(array('action' => 'newaction')) . '">Add New</a>';
 		echo "</h2>";
 
 		$this->show_admin_messages();
@@ -1110,15 +1142,15 @@ class automessage {
 
 		echo "</div>";
 
-		//$this->add_action_form();
-
 	}
 
 	function handle_usermessageadmin_panel() {
 
 		global $action, $page;
 
-		if(!empty($action) && ($action == 'editaction' || $action == 'addaction') ) {
+		wp_reset_vars( array('action', 'page') );
+
+		if(!empty($action) && ($action == 'editaction' || $action == 'newaction') ) {
 			$id = addslashes($_GET['id']);
 			$this->edit_action_form($id);
 			return;
@@ -1127,7 +1159,7 @@ class automessage {
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('User Level Messages','automessage');
-		echo '<a class="button add-new-h2" href="">Add New</a>';
+		echo '<a class="button add-new-h2" href="' . add_query_arg(array('action' => 'newaction')) . '">Add New</a>';
 		echo "</h2>";
 
 		echo '<br clear="all" />';
@@ -1156,8 +1188,6 @@ class automessage {
 		echo "</form>";
 
 		echo "</div>";
-
-		//$this->add_action_form();
 
 	}
 
