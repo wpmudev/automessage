@@ -218,99 +218,7 @@ class automessage {
 
 		$this->add_admin_header_automessage_core();
 
-		switch($action) {
-
-			case 'addaction':
-						check_admin_referer('add-action');
-						if($this->add_action()) {
-							wp_safe_redirect( add_query_arg( 'msg', 1, wp_get_original_referer() ) );
-						} else {
-							wp_safe_redirect( add_query_arg( 'msg', 2, wp_get_original_referer() ) );
-						}
-						break;
-			case 'pauseaction':
-						$id = addslashes($_GET['id']);
-						$this->set_pause($id, true);
-						wp_safe_redirect( add_query_arg( 'msg', 3, wp_get_original_referer() ) );
-						break;
-			case 'unpauseaction':
-						$id = addslashes($_GET['id']);
-						$this->set_pause($id, false);
-						wp_safe_redirect( add_query_arg( 'msg', 4, wp_get_original_referer() ) );
-						break;
-			case 'allmessages':
-						check_admin_referer($_POST['actioncheck']);
-						if(isset($_POST['allaction_delete'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->delete_action($as);
-								}
-								wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
-							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 5, wp_get_original_referer() ) );
-							}
-						}
-						if(isset($_POST['allaction_pause'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->set_pause($as, true);
-								}
-								wp_safe_redirect( add_query_arg( 'msg', 6, wp_get_original_referer() ) );
-							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 7, wp_get_original_referer() ) );
-							}
-						}
-						if(isset($_POST['allaction_unpause'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->set_pause($as, false);
-								}
-								wp_safe_redirect( add_query_arg( 'msg', 8, wp_get_original_referer() ) );
-							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 9, wp_get_original_referer() ) );
-							}
-						}
-						if(isset($_POST['allaction_process'])) {
-							if(isset($_POST['allschedules'])) {
-								$allsscheds = $_POST['allschedules'];
-								foreach ($allsscheds as $as) {
-									$this->force_process($as);
-								}
-								wp_safe_redirect( add_query_arg( 'msg', 10, wp_get_original_referer() ) );
-							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 11, wp_get_original_referer() ) );
-							}
-						}
-						$this->handle_messageadmin_panel();
-						break;
-			case 'deleteaction':
-						$id = addslashes($_GET['id']);
-						$this->delete_action($id);
-						wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
-						break;
-			case 'editaction':
-						$id = addslashes($_GET['id']);
-						$this->edit_action_form($id);
-						break;
-			case 'updateaction':
-						check_admin_referer('update-action');
-						$this->update_action();
-						wp_safe_redirect( add_query_arg( 'msg', 13, wp_get_original_referer() ) );
-						break;
-			case 'processaction':
-						$id = addslashes($_GET['id']);
-						$this->force_process($id);
-						wp_safe_redirect( add_query_arg( 'msg', 14, wp_get_original_referer() ) );
-						break;
-
-			default:	// do nothing and carry on
-						break;
-
-		}
-
+		$this->process_admin_updates();
 
 	}
 
@@ -320,6 +228,13 @@ class automessage {
 
 		$this->add_admin_header_automessage_core();
 
+		$this->process_admin_updates();
+
+	}
+
+	function process_admin_updates() {
+		global $action, $page;
+
 		switch($action) {
 
 			case 'addaction':
@@ -393,10 +308,6 @@ class automessage {
 						$this->delete_action($id);
 						wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
 						break;
-			case 'editaction':
-						$id = addslashes($_GET['id']);
-						$this->edit_action_form($id);
-						break;
 			case 'updateaction':
 						check_admin_referer('update-action');
 						$this->update_action();
@@ -412,8 +323,6 @@ class automessage {
 						break;
 
 		}
-
-
 	}
 
 	function show_admin_messages() {
@@ -647,32 +556,34 @@ class automessage {
 
 	}
 
-	function get_available_actions($levels = array('site', 'blog')) {
+	function get_available_actions($level) {
 
-		if(!is_array($levels)) {
+		if(empty($level)) {
 			return false;
 		}
 
-		$sql = $this->db->prepare("SELECT * FROM {$this->am_actions} WHERE level IN ('" . implode("','", $levels) . "')");
+		$args = array(
+			'post_type' => 'contact',
+			'post_status' => $type,
+			'meta_key' => '_automessage_level',
+			'orderby' => 'post_modified',
+			'order' => 'DESC',
+			'meta_value' => $level
+		);
 
-		$actions = $this->db->get_results($sql, OBJECT);
+		$get_actions = new WP_Query;
+		$actions = $get_actions->query($args);
 
-		if($actions) {
-			return $actions;
-		} else {
-			return false;
-		}
+		return $actions;
 
 	}
 
 	function get_action($id) {
 
-		$sql = $this->db->prepare("SELECT * FROM {$this->am_schedule} WHERE id = %d", $id);
+		$result = &get_post($id);
 
-		$results = $this->db->get_row($sql);
-
-		if($results) {
-			return $results;
+		if($result) {
+			return $result;
 		} else {
 			return false;
 		}
@@ -741,12 +652,12 @@ class automessage {
 
 	function edit_action_form($id) {
 
-		$page = addslashes($_GET['page']);
+		global $page;
 
 		$editing = $this->get_action($id);
 
 		if(!$editing) {
-			echo __('Could not find the action, please check the available message list.','automessage');
+			$this->add_action_form();
 		}
 
 		echo "<div class='wrap'>";
@@ -865,7 +776,7 @@ class automessage {
 
 	function add_action_form() {
 
-		$page = addslashes($_GET['page']);
+		global $page;
 
 		echo "<div class='wrap'>";
 
@@ -1160,6 +1071,12 @@ class automessage {
 
 		global $action, $page;
 
+		if(!empty($action) && ($action == 'editaction' || $action == 'addaction') ) {
+			$id = addslashes($_GET['id']);
+			$this->edit_action_form($id);
+			return;
+		}
+
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('Blog Level Messages','automessage');
@@ -1168,12 +1085,7 @@ class automessage {
 
 		$this->show_admin_messages();
 
-		echo '<ul class="subsubsub">';
-		echo '<li><a href="#form-add-action" class="rbutton"><strong>' . __('Add a new action', 'automessage') . '</strong></a></li>';
-		echo '</ul>';
 		echo '<br clear="all" />';
-
-		echo "<h3>" . __('Site level actions','automessage') . "</h3>";
 
 		$results = $this->get_sitelevel_schedule();
 
@@ -1198,7 +1110,7 @@ class automessage {
 
 		echo "</div>";
 
-		$this->add_action_form();
+		//$this->add_action_form();
 
 	}
 
@@ -1206,21 +1118,21 @@ class automessage {
 
 		global $action, $page;
 
+		if(!empty($action) && ($action == 'editaction' || $action == 'addaction') ) {
+			$id = addslashes($_GET['id']);
+			$this->edit_action_form($id);
+			return;
+		}
+
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('User Level Messages','automessage');
 		echo '<a class="button add-new-h2" href="">Add New</a>';
 		echo "</h2>";
 
-		$this->show_admin_messages();
-
-		echo '<ul class="subsubsub">';
-		echo '<li><a href="#form-add-action" class="rbutton"><strong>' . __('Add a new action', 'automessage') . '</strong></a></li>';
-		echo '</ul>';
 		echo '<br clear="all" />';
 
-		// Blog level messages
-		echo "<h3>" . __('Blog level actions','automessage') . "</h3>";
+		$this->show_admin_messages();
 
 		$results = $this->get_bloglevel_schedule();
 
@@ -1239,14 +1151,13 @@ class automessage {
 		echo '</div>';
 		echo '</div>';
 
-		if(apply_filters('automessage_add_action', true))
-			$this->show_actions_list($results);
+		$this->show_actions_list($results);
 
 		echo "</form>";
 
 		echo "</div>";
 
-		$this->add_action_form();
+		//$this->add_action_form();
 
 	}
 
