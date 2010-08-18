@@ -1161,7 +1161,10 @@ class automessage {
 		global $action, $page;
 
 		echo "<div class='wrap'  style='position:relative;'>";
-		echo "<h2>" . __('Message responses','automessage') . "</h2>";
+		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
+		echo "<h2>" . __('Blog Level Messages','automessage');
+		echo '<a class="button add-new-h2" href="">Add New</a>';
+		echo "</h2>";
 
 		$this->show_admin_messages();
 
@@ -1170,41 +1173,13 @@ class automessage {
 		echo '</ul>';
 		echo '<br clear="all" />';
 
-		// Site level messages - if we are at a site level
-		if(function_exists('is_site_admin') && is_site_admin()) {
+		echo "<h3>" . __('Site level actions','automessage') . "</h3>";
 
-			echo "<h3>" . __('Site level actions','automessage') . "</h3>";
-
-			$results = $this->get_sitelevel_schedule();
-
-			echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
-			echo '<input type="hidden" name="page" value="' . $page . '" />';
-			echo '<input type="hidden" name="actioncheck" value="allsiteactions" />';
-			echo '<div class="tablenav">';
-			echo '<div class="alignleft">';
-
-			echo '<input type="submit" value="' . __('Delete') . '" name="allaction_delete" class="button-secondary delete" />';
-			echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
-			echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
-			echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
-			wp_nonce_field( 'allsiteactions' );
-			echo '<br class="clear" />';
-			echo '</div>';
-			echo '</div>';
-
-			$this->show_actions_list($results);
-
-			echo "</form>";
-		}
-
-		// Blog level messages
-		echo "<h3>" . __('Blog level actions','automessage') . "</h3>";
-
-		$results = $this->get_bloglevel_schedule();
+		$results = $this->get_sitelevel_schedule();
 
 		echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
 		echo '<input type="hidden" name="page" value="' . $page . '" />';
-		echo '<input type="hidden" name="actioncheck" value="allblogactions" />';
+		echo '<input type="hidden" name="actioncheck" value="allsiteactions" />';
 		echo '<div class="tablenav">';
 		echo '<div class="alignleft">';
 
@@ -1212,13 +1187,12 @@ class automessage {
 		echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
 		echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
 		echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
-		wp_nonce_field( 'allblogactions' );
+		wp_nonce_field( 'allsiteactions' );
 		echo '<br class="clear" />';
 		echo '</div>';
 		echo '</div>';
 
-		if(apply_filters('automessage_add_action', true))
-			$this->show_actions_list($results);
+		$this->show_actions_list($results);
 
 		echo "</form>";
 
@@ -1233,7 +1207,10 @@ class automessage {
 		global $action, $page;
 
 		echo "<div class='wrap'  style='position:relative;'>";
-		echo "<h2>" . __('Message responses','automessage') . "</h2>";
+		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
+		echo "<h2>" . __('User Level Messages','automessage');
+		echo '<a class="button add-new-h2" href="">Add New</a>';
+		echo "</h2>";
 
 		$this->show_admin_messages();
 
@@ -1241,33 +1218,6 @@ class automessage {
 		echo '<li><a href="#form-add-action" class="rbutton"><strong>' . __('Add a new action', 'automessage') . '</strong></a></li>';
 		echo '</ul>';
 		echo '<br clear="all" />';
-
-		// Site level messages - if we are at a site level
-		if(function_exists('is_site_admin') && is_site_admin()) {
-
-			echo "<h3>" . __('Site level actions','automessage') . "</h3>";
-
-			$results = $this->get_sitelevel_schedule();
-
-			echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
-			echo '<input type="hidden" name="page" value="' . $page . '" />';
-			echo '<input type="hidden" name="actioncheck" value="allsiteactions" />';
-			echo '<div class="tablenav">';
-			echo '<div class="alignleft">';
-
-			echo '<input type="submit" value="' . __('Delete') . '" name="allaction_delete" class="button-secondary delete" />';
-			echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
-			echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
-			echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
-			wp_nonce_field( 'allsiteactions' );
-			echo '<br class="clear" />';
-			echo '</div>';
-			echo '</div>';
-
-			$this->show_actions_list($results);
-
-			echo "</form>";
-		}
 
 		// Blog level messages
 		echo "<h3>" . __('Blog level actions','automessage') . "</h3>";
