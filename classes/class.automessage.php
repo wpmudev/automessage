@@ -15,6 +15,8 @@ class automessage {
 	var $am_schedule;
 	var $am_queue;
 
+	var $user_id;
+
 	// Change this to increase or decrease the number of messages to process in any run
 	var $processlimit = 250;
 
@@ -105,6 +107,9 @@ class automessage {
 													'delete_cap' => 'delete_automessage'
 													)
 												);
+
+		$user = wp_get_current_user();
+		$this->user_id = $user->ID;
 	}
 
 	function setup_menu() {
@@ -130,65 +135,10 @@ class automessage {
 	function install($install = false) {
 
 		if($install == false) {
-
-			// Create or update the tables
-
-			$sql = "CREATE TABLE $this->am_actions (
-			  id bigint(20) NOT NULL auto_increment,
-			  level varchar(10) default NULL,
-			  action varchar(150) default NULL,
-			  title varchar(250) default NULL,
-			  description text,
-			  PRIMARY KEY  (id),
-			  KEY level (level),
-			  KEY action (action)
-			)";
-			$this->db->query($sql);
-
-			$sql = "CREATE TABLE $this->am_schedule (
-			  id bigint(20) NOT NULL auto_increment,
-			  system_id bigint(20) NOT NULL default '0',
-			  site_id bigint(20) NOT NULL default '0',
-			  blog_id bigint(20) NOT NULL default '0',
-			  action_id bigint(20) default NULL,
-			  subject varchar(250) default NULL,
-			  message text,
-			  period int(11) default '0',
-			  timeperiod varchar(50) default 'day',
-			  pause tinyint(4) default '0',
-			  PRIMARY KEY  (id),
-			  KEY system_id (system_id),
-			  KEY site_id (site_id),
-			  KEY blog_id (blog_id),
-			  KEY action_id (action_id)
-			)";
-			$this->db->query($sql);
-
-			$sql = "CREATE TABLE $this->am_queue (
-			  id bigint(20) NOT NULL auto_increment,
-			  schedule_id bigint(20) default NULL,
-			  runon bigint(20) default NULL,
-			  sendtoemail varchar(150) default NULL,
-			  user_id bigint(20) NOT NULL default '0',
-			  blog_id bigint(20) default '0',
-			  site_id bigint(20) default '0',
-			  PRIMARY KEY  (id),
-			  KEY action_id (schedule_id),
-			  KEY runon (runon),
-			  KEY user_id (user_id),
-			  KEY blog_id (blog_id),
-			  KEY site_id (site_id)
-			)";
-			$this->db->query($sql);
-
-			$this->db->insert($this->am_actions, array("level" => "site", "action" => "wpmu_new_blog", "title" => "Create new blog"));
-			$this->db->insert($this->am_actions, array("level" => "blog", "action" => "wpmu_new_user", "title" => "Create new user"));
-
+			$this->flush_rewrite();
 		}
 
 		update_automessage_option('automessage_installed', $this->build);
-
-		$this->flush_rewrite();
 
 	}
 
@@ -239,20 +189,20 @@ class automessage {
 			case 'addaction':
 						check_admin_referer('add-action');
 						if($this->add_action()) {
-							wp_safe_redirect( add_query_arg( 'msg', 1, wp_get_original_referer() ) );
+							wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 1, wp_get_original_referer() )) );
 						} else {
-							wp_safe_redirect( add_query_arg( 'msg', 2, wp_get_original_referer() ) );
+							wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 2, wp_get_original_referer() )) );
 						}
 						break;
 			case 'pauseaction':
 						$id = addslashes($_GET['id']);
 						$this->set_pause($id, true);
-						wp_safe_redirect( add_query_arg( 'msg', 3, wp_get_original_referer() ) );
+						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 3, wp_get_original_referer() )) );
 						break;
 			case 'unpauseaction':
 						$id = addslashes($_GET['id']);
 						$this->set_pause($id, false);
-						wp_safe_redirect( add_query_arg( 'msg', 4, wp_get_original_referer() ) );
+						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 4, wp_get_original_referer() )) );
 						break;
 			case 'allmessages':
 						check_admin_referer($_POST['actioncheck']);
@@ -262,9 +212,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->delete_action($as);
 								}
-								wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 12, wp_get_original_referer() )) );
 							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 5, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 5, wp_get_original_referer() )) );
 							}
 						}
 						if(isset($_POST['allaction_pause'])) {
@@ -273,9 +223,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->set_pause($as, true);
 								}
-								wp_safe_redirect( add_query_arg( 'msg', 6, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 6, wp_get_original_referer() )) );
 							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 7, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 7, wp_get_original_referer() )) );
 							}
 						}
 						if(isset($_POST['allaction_unpause'])) {
@@ -284,9 +234,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->set_pause($as, false);
 								}
-								wp_safe_redirect( add_query_arg( 'msg', 8, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 8, wp_get_original_referer() )) );
 							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 9, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 9, wp_get_original_referer() )) );
 							}
 						}
 						if(isset($_POST['allaction_process'])) {
@@ -295,9 +245,9 @@ class automessage {
 								foreach ($allsscheds as $as) {
 									$this->force_process($as);
 								}
-								wp_safe_redirect( add_query_arg( 'msg', 10, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 10, wp_get_original_referer() )) );
 							} else {
-								wp_safe_redirect( add_query_arg( 'msg', 11, wp_get_original_referer() ) );
+								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 11, wp_get_original_referer() )) );
 							}
 						}
 						$this->handle_messageadmin_panel();
@@ -305,17 +255,17 @@ class automessage {
 			case 'deleteaction':
 						$id = addslashes($_GET['id']);
 						$this->delete_action($id);
-						wp_safe_redirect( add_query_arg( 'msg', 12, wp_get_original_referer() ) );
+						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 12, wp_get_original_referer() )) );
 						break;
 			case 'updateaction':
 						check_admin_referer('update-action');
 						$this->update_action();
-						wp_safe_redirect( add_query_arg( 'msg', 13, wp_get_original_referer() ) );
+						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 13, wp_get_original_referer() )) );
 						break;
 			case 'processaction':
 						$id = addslashes($_GET['id']);
 						$this->force_process($id);
-						wp_safe_redirect( add_query_arg( 'msg', 14, wp_get_original_referer() ) );
+						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 14, wp_get_original_referer() )) );
 						break;
 
 			default:	// do nothing and carry on
@@ -513,45 +463,39 @@ class automessage {
 
 
 
-	function get_sitelevel_schedule() {
+	function get_bloglevel_schedule() {
 
-		global $current_site;
+		$args = array(
+			'post_type' => 'automessage',
+			'post_status' => $type,
+			'meta_key' => '_automessage_level',
+			'orderby' => 'menu_oder',
+			'order' => 'ASC',
+			'meta_value' => 'blog'
+		);
 
-		$sql = $this->db->prepare("SELECT s.*, a.title FROM {$this->am_schedule} AS s, {$this->am_actions} AS a WHERE s.action_id = a.id AND a.level = %s AND s.site_id = %d ORDER BY action_id, timeperiod, period", 'site', $current_site->id);
+		$get_actions = new WP_Query;
+		$actions = $get_actions->query($args);
 
-		$results = $this->db->get_results($sql, OBJECT);
-
-		if($results) {
-
-			foreach($results as $key => $value) {
-				$results[$key]->queued = $this->db->get_var( $this->db->prepare("SELECT count(*) FROM {$this->am_queue} as q WHERE q.schedule_id = %d", $value->id) );
-			}
-
-			return $results;
-		} else {
-			return false;
-		}
+		return $actions;
 
 	}
 
-	function get_bloglevel_schedule() {
+	function get_userlevel_schedule() {
 
-		global $current_site;
+		$args = array(
+			'post_type' => 'automessage',
+			'post_status' => $type,
+			'meta_key' => '_automessage_level',
+			'orderby' => 'menu_oder',
+			'order' => 'ASC',
+			'meta_value' => 'user'
+		);
 
-		$sql = $this->db->prepare("SELECT s.*, a.title FROM {$this->am_schedule} AS s, {$this->am_actions} AS a WHERE s.action_id = a.id AND a.level = %s AND s.blog_id = %d ORDER BY action_id, timeperiod, period", 'blog', $current_site->blog_id);
+		$get_actions = new WP_Query;
+		$actions = $get_actions->query($args);
 
-		$results = $this->db->get_results($sql, OBJECT);
-
-		if($results) {
-
-			foreach($results as $key => $value) {
-				$results[$key]->queued = $this->db->get_var( $this->db->prepare("SELECT count(*) FROM {$this->am_queue} as q WHERE q.schedule_id = %d", $value->id) );
-			}
-
-			return $results;
-		} else {
-			return false;
-		}
+		return $actions;
 
 	}
 
@@ -591,12 +535,13 @@ class automessage {
 
 	function add_action() {
 
-		$action = $_POST['action'];
+		$hook = $_POST['hook'];
 		$subject = $_POST['subject'];
 		$message = $_POST['message'];
 
-		$period = $_POST['period'];
-		$timeperiod = $_POST['timeperiod'];
+		$period = $_POST['period'] . ' ' . $_POST['timeperiod'];
+
+		$type = $_POST['type'];
 
 		$post = array(
 		'post_title' => $subject,
@@ -606,145 +551,143 @@ class automessage {
 		'post_author' => $this->user_id,
 		'post_category' => array(get_option('default_category')),
 		'post_type' => 'automessage',
-		'comment_status' => 'closed'
+		'comment_status' => 'closed',
+		'menu_order' => $_POST['period']
 		);
 
 		// update the post
 		$message_id = wp_insert_post($post);
 
 		if(!is_wp_error($message_id)) {
-			update_metadata('post', $message_id, '_automessage_action', $action);
-			update_metadata('post', $message_id, '_automessage_level', 'blog');
+			update_metadata('post', $message_id, '_automessage_hook', $hook);
+			update_metadata('post', $message_id, '_automessage_level', $type);
 			update_metadata('post', $message_id, '_automessage_period', $period);
-			update_metadata('post', $message_id, '_automessage_timeperiod', $timeperiod);
 		}
 
 		return $message_id;
 
-		/*
-		$system_id = apply_filters('get_system_id', 1);
-		$site_id = $current_site->id;
-		$blog_id = $current_site->blog_id;
-
-
-		$action = $_POST['action'];
-		$subject = $_POST['subject'];
-		$message = $_POST['message'];
-
-		$period = $_POST['period'];
-		$timeperiod = $_POST['timeperiod'];
-
-		$this->db->insert($this->am_schedule, array("system_id" => $system_id, "site_id" => $site_id, "blog_id" => $blog_id, "action_id" => $action, "subject" => $subject, "message" => $message, "period" => $period, "timeperiod" => $timeperiod));
-
-		return $this->db->insert_id;
-		*/
 	}
 
 	function delete_action($scheduleid) {
 
+
 		if($scheduleid) {
-			$this->db->query( $this->db->prepare("DELETE FROM {$this->am_schedule} WHERE id = %d", $scheduleid));
+			wp_delete_post( $scheduleid, true );
 		}
 
 	}
 
 	function update_action() {
 
-		$id = $_POST['id'];
-
-		$system_id = $_POST['system_id'];
-		$site_id = $_POST['site_id'];
-		$blog_id = $_POST['blog_id'];
-
-
-		$action = $_POST['action'];
+		$id = $_POST['ID'];
+		$hook = $_POST['hook'];
 		$subject = $_POST['subject'];
 		$message = $_POST['message'];
 
-		$period = $_POST['period'];
-		$timeperiod = $_POST['timeperiod'];
+		$period = $_POST['period'] . ' ' . $_POST['timeperiod'];
 
-		$this->db->update($this->am_schedule, array("system_id" => $system_id, "site_id" => $site_id, "blog_id" => $blog_id, "action_id" => $action, "subject" => $subject, "message" => $message, "period" => $period, "timeperiod" => $timeperiod), array("id" => $id));
+		$type = $_POST['type'];
+
+		$post = array(
+		'post_title' => $subject,
+		'post_content' => $message,
+		'post_name' => sanitize_title($subject),
+		'post_status' => 'private', // You can also make this pending, or whatever you want, really.
+		'post_category' => array(get_option('default_category')),
+		'post_type' => 'automessage',
+		'comment_status' => 'closed',
+		'menu_order' => $_POST['period'],
+		'ID' => $id
+		);
+
+		// update the post
+		$message_id = wp_update_post($post);
+
+		if(!is_wp_error($message_id)) {
+			update_metadata('post', $message_id, '_automessage_hook', $hook);
+			update_metadata('post', $message_id, '_automessage_level', $type);
+			update_metadata('post', $message_id, '_automessage_period', $period);
+		}
+
+		return $message_id;
 
 	}
 
 	function set_pause($scheduleid, $pause = true) {
 
 		if($pause) {
-			$this->db->update($this->am_schedule, array("pause" => 1), array("id" => $scheduleid));
+
+			$post = array(
+			'post_status' => 'draft',
+			'ID' => $scheduleid
+			);
+
+			// update the post
+			$message_id = wp_update_post($post);
+
 		} else {
-			$this->db->update($this->am_schedule, array("pause" => 0), array("id" => $scheduleid));
+
+			$post = array(
+			'post_status' => 'private',
+			'ID' => $scheduleid
+			);
+
+			// update the post
+			$message_id = wp_update_post($post);
+
+
 		}
 
 
 	}
 
-	function edit_action_form($id) {
+	function edit_action_form($id, $type) {
 
 		global $page;
 
 		$editing = $this->get_action($id);
 
 		if(!$editing) {
-			$this->add_action_form();
+			$this->add_action_form($type);
 			return;
 		}
+
+		if(!empty($editing->ID)) {
+			$metadata = get_post_custom($editing->ID);
+		} else {
+			$metadata = array();
+		}
+
+		print_r($metadata);
 
 		echo "<div class='wrap'>";
 		echo "<h2>" . __('Edit Action', 'automessage') . "</h2>";
 
-		echo '<form method="post" action="?page=' . $page . '&amp;action=updateaction">';
-		echo '<input type="hidden" name="id" value="' . $editing->id . '" />';
-
-		echo '<input type="hidden" name="system_id" value="' . $editing->system_id . '" />';
-		echo '<input type="hidden" name="site_id" value="' . $editing->site_id . '" />';
-		echo '<input type="hidden" name="blog_id" value="' . $editing->blog_id . '" />';
-
+		echo '<form method="post" action="?page=' . $page . '">';
+		echo '<input type="hidden" name="ID" value="' . $editing->ID . '" />';
+		echo "<input type='hidden' name='type' value='" . $type . "' />";
+		echo "<input type='hidden' name='action' value='updateaction' />";
 		wp_nonce_field('update-action');
 		echo '<table class="form-table">';
 		echo '<tr class="form-field form-required">';
 		echo '<th style="" scope="row" valign="top">' . __('Action','automessage') . '</th>';
 		echo '<td valign="top">';
 
-		$filter = array();
-		if(function_exists('is_site_admin') && is_site_admin()) {
-			$filter[] = 'site';
-		}
-		$filter[] = 'blog';
+		echo '<select name="hook" style="width: 40%;">';
+			switch($type) {
+				case 'blog':	echo '<option value="wpmu_new_blog"';
+								echo '>';
+								echo __('Create new blog','automessage');
+								echo '</option>';
+								break;
 
-		$actions = $this->get_available_actions($filter);
-
-		if($actions) {
-
-			echo '<select name="action" style="width: 40%;">';
-
-			$lastlevel = "";
-
-			foreach($actions as $action) {
-				if($lastlevel != $action->level) {
-					if($lastlevel != "") {
-						echo '</optgroup>';
-					}
-					$lastlevel = $action->level;
-					echo '<optgroup label="';
-					switch($lastlevel) {
-						case "site": 	echo "Site level actions";
-										break;
-						case "blog": 	echo "Blog level actions";
-										break;
-					}
-					echo '">';
-				}
-				echo '<option value="' . $action->id . '"';
-				if($editing->action_id == $action->id) echo ' selected="selected" ';
-				echo '>';
-				echo wp_specialchars($action->title);
-				echo '</option>';
+				case 'user':	echo '<option value="wpmu_new_user"';
+								echo '>';
+								echo __('Create new user','automessage');
+								echo '</option>';
+								break;
 			}
-
-			echo '</select>';
-
-		}
+		echo '</select>';
 
 		echo '</td>';
 		echo '</tr>';
@@ -756,7 +699,7 @@ class automessage {
 		echo '<select name="period" style="width: 40%;">';
 		for($n = 0; $n <= 31; $n++) {
 			echo "<option value='$n'";
-			if($editing->period == $n)  echo ' selected="selected" ';
+			if($editing->menu_order == $n)  echo ' selected="selected" ';
 			echo ">";
 			switch($n) {
 				case 0: 	echo __("Send immediately", 'automessage');
@@ -768,18 +711,18 @@ class automessage {
 			echo "</option>";
 		}
 		echo '</select>';
-		echo '<input type="hidden" name="timeperiod" value="' . $editing->timeperiod . '" />';
+		echo '<input type="hidden" name="timeperiod" value="day" />';
 		echo '</td>';
 		echo '</tr>';
 
 		echo '<tr class="form-field form-required">';
 		echo '<th style="" scope="row" valign="top">' . __('Message Subject','automessage') . '</th>';
-		echo '<td valign="top"><input name="subject" type="text" size="50" title="' . __('Message subject') . '" style="width: 50%;" value="' . htmlentities(stripslashes($editing->subject),ENT_QUOTES, 'UTF-8') . '" /></td>';
+		echo '<td valign="top"><input name="subject" type="text" size="50" title="' . __('Message subject') . '" style="width: 50%;" value="' . htmlentities(stripslashes($editing->post_title),ENT_QUOTES, 'UTF-8') . '" /></td>';
 		echo '</tr>';
 
 		echo '<tr class="form-field form-required">';
 		echo '<th style="" scope="row" valign="top">' . __('Message','automessage') . '</th>';
-		echo '<td valign="top"><textarea name="message" style="width: 50%; float: left;" rows="15" cols="40">' . htmlentities(stripslashes($editing->message),ENT_QUOTES, 'UTF-8') . '</textarea>';
+		echo '<td valign="top"><textarea name="message" style="width: 50%; float: left;" rows="15" cols="40">' . htmlentities(stripslashes($editing->post_content),ENT_QUOTES, 'UTF-8') . '</textarea>';
 		// Display some instructions for the message.
 		echo '<div class="instructions" style="float: left; width: 40%; margin-left: 10px;">';
 		echo __('You can use the following constants within the message body to embed database information.','automessage');
@@ -804,7 +747,7 @@ class automessage {
 		echo "</div>";
 	}
 
-	function add_action_form() {
+	function add_action_form($type) {
 
 		global $page;
 
@@ -814,48 +757,28 @@ class automessage {
 
 		echo "<a name='form-add-action' ></a>\n";
 
-		echo '<form method="post" action="?page=' . $page . '&amp;action=addaction">';
+		echo '<form method="post" action="?page=' . $page . '">';
+		echo "<input type='hidden' name='action' value='addaction' />";
+		echo "<input type='hidden' name='type' value='" . $type . "' />";
 		wp_nonce_field('add-action');
 		echo '<table class="form-table">';
 		echo '<tr class="form-field form-required" valign="top">';
 		echo '<th style="" scope="row" valign="top">' . __('Action','automessage') . '</th>';
 		echo '<td>';
 
-		$filter = array();
-		if(function_exists('is_site_admin') && is_site_admin()) {
-			$filter[] = 'site';
-		}
-		$filter[] = 'blog';
+		echo '<select name="hook" style="width: 40%;">';
+			switch($type) {
+				case 'blog':	echo '<option value="wpmu_new_blog">';
+								echo __('Create new blog','automessage');
+								echo '</option>';
+								break;
 
-		$actions = $this->get_available_actions($filter);
-
-		if($actions) {
-
-			echo '<select name="action" style="width: 40%;">';
-
-			$lastlevel = "";
-
-			foreach($actions as $action) {
-				if($lastlevel != $action->level) {
-					if($lastlevel != "") {
-						echo '</optgroup>';
-					}
-					$lastlevel = $action->level;
-					echo '<optgroup label="';
-					switch($lastlevel) {
-						case "site": 	echo "Site level actions";
-										break;
-						case "blog": 	echo "Blog level actions";
-										break;
-					}
-					echo '">';
-				}
-				echo '<option value="' . $action->id . '">';
-				echo wp_specialchars($action->title);
-				echo '</option>';
+				case 'user':	echo '<option value="wpmu_new_user">';
+								echo __('Create new user','automessage');
+								echo '</option>';
+								break;
 			}
-			echo '</select>';
-		}
+		echo '</select>';
 
 		echo '</td>';
 		echo '</tr>';
@@ -900,8 +823,6 @@ class automessage {
 		echo '%sitename%<br/>';
 		echo "%siteurl%<br/>";
 
-
-
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
@@ -920,7 +841,7 @@ class automessage {
 
 	function show_actions_list($results = false) {
 
-		$page = addslashes($_GET['page']);
+		global $page;
 
 		echo '<table width="100%" cellpadding="3" cellspacing="3" class="widefat">';
 		echo '<thead>';
@@ -950,37 +871,59 @@ class automessage {
 
 		if($results) {
 			$bgcolor = $class = '';
-			$action = '';
+			$lasthook = '';
 
 			foreach($results as $result) {
+
+				if(!empty($result->ID)) {
+					$metadata = get_post_custom($result->ID);
+				} else {
+					$metadata = array();
+				}
+
+				//print_r($metadata);
+
+				if(array_key_exists('_automessage_hook', $metadata) && is_array($metadata['_automessage_hook'])) {
+					$hook = array_shift($metadata['_automessage_hook']);
+				} else {
+					$hook = '';
+				}
+
 				$class = ('alternate' == $class) ? '' : 'alternate';
-				if($action != $result->action_id) {
-					$title = stripslashes($result->title);
-					$action = $result->action_id;
+				if($lasthook != $hook) {
+					switch($hook) {
+						case 'wpmu_new_blog':	$title = __('Create new blog','automessage');
+												break;
+
+						case 'wpmu_new_user':	$title = __('Create new user','automessage');
+												break;
+					}
+
+					$lasthook = $hook;
 				} else {
 					$title = '&nbsp;';
 				}
 				echo '<tr>';
 				echo '<th scope="row" class="check-column">';
-				echo '<input type="checkbox" id="schedule_' . $result->id . '" name="allschedules[]" value="' . $result->id .'" />';
+				echo '<input type="checkbox" id="schedule_' . $result->ID . '" name="allschedules[]" value="' . $result->ID .'" />';
 				echo '</th>';
 
 				echo '<th scope="row">';
-				if($result->pause != 0) {
+				if($result->post_status == 'draft') {
 					echo __('[Paused] ','automessage');
 				}
 				echo $title;
 
 				$actions = array();
 
-				$actions[] = '<a href="?page=' . $page . '&amp;action=editaction&amp;id=' . $result->id . '" title="' . __('Edit this message','automessage') . '">' . __('Edit','automessage') . '</a>';
-				if($result->pause == 0) {
-					$actions[] = '<a href="?page=' . $page . '&amp;action=pauseaction&amp;id=' . $result->id . '" title="' . __('Pause this message','automessage') . '">' . __('Pause','automessage') . '</a>';
+				$actions[] = '<a href="?page=' . $page . '&amp;action=editaction&amp;id=' . $result->ID . '" title="' . __('Edit this message','automessage') . '">' . __('Edit','automessage') . '</a>';
+				if($result->post_status == 'private') {
+					$actions[] = '<a href="?page=' . $page . '&amp;action=pauseaction&amp;id=' . $result->ID . '" title="' . __('Pause this message','automessage') . '">' . __('Pause','automessage') . '</a>';
 				} else {
-					$actions[] = '<a href="?page=' . $page . '&amp;action=unpauseaction&amp;id=' . $result->id . '" title="' . __('Unpause this message','automessage') . '">' . __('Unpause','automessage') . '</a>';
+					$actions[] = '<a href="?page=' . $page . '&amp;action=unpauseaction&amp;id=' . $result->ID . '" title="' . __('Unpause this message','automessage') . '">' . __('Unpause','automessage') . '</a>';
 				}
-				$actions[] = '<a href="?page=' . $page . '&amp;action=processaction&amp;id=' . $result->id . '" title="' . __('Process this message','automessage') . '">' . __('Process','automessage') . '</a>';
-				$actions[] = '<a href="?page=' . $page . '&amp;action=deleteaction&amp;id=' . $result->id . '" title="' . __('Delete this message','automessage') . '">' . __('Delete','automessage') . '</a>';
+				$actions[] = '<a href="?page=' . $page . '&amp;action=processaction&amp;id=' . $result->ID . '" title="' . __('Process this message','automessage') . '">' . __('Process','automessage') . '</a>';
+				$actions[] = '<a href="?page=' . $page . '&amp;action=deleteaction&amp;id=' . $result->ID . '" title="' . __('Delete this message','automessage') . '">' . __('Delete','automessage') . '</a>';
 
 				echo '<div class="row-actions">';
 				echo implode(' | ', $actions);
@@ -988,23 +931,23 @@ class automessage {
 
 				echo '</th>';
 
-				echo '<th scope="row">';
+				echo '<th scope="row" valign="top">';
 
-				if($result->period == 0) {
+				if($result->menu_order == 0) {
 					echo __('Immediate','automessage');
 				} elseif($result->period == 1) {
-					echo sprintf(__('%d %s','automessage'), $result->period, $result->timeperiod);
+					echo sprintf(__('%d %s','automessage'), $result->menu_order, 'day');
 				} else {
-					echo sprintf(__('%d %ss','automessage'), $result->period, $result->timeperiod);
+					echo sprintf(__('%d %ss','automessage'), $result->menu_order, 'day');
 				}
 
 				echo '</th>';
 
-				echo '<th scope="row">';
-				echo stripslashes($result->subject);
+				echo '<th scope="row" valign="top">';
+				echo stripslashes($result->post_title);
 				echo '</th>';
 
-				echo '<th scope="row">';
+				echo '<th scope="row" valign="top">';
 				echo intval($result->queued);
 				echo '</th>';
 
@@ -1105,21 +1048,21 @@ class automessage {
 
 		if(!empty($action) && ($action == 'editaction' || $action == 'newaction') ) {
 			$id = addslashes($_GET['id']);
-			$this->edit_action_form($id);
+			$this->edit_action_form($id, 'blog');
 			return;
 		}
 
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('Blog Level Messages','automessage');
-		echo '<a class="button add-new-h2" href="' . add_query_arg(array('action' => 'newaction')) . '">Add New</a>';
+		echo '<a class="button add-new-h2" href="' . remove_query_arg('msg', add_query_arg(array('action' => 'newaction'))) . '">Add New</a>';
 		echo "</h2>";
 
 		$this->show_admin_messages();
 
 		echo '<br clear="all" />';
 
-		$results = $this->get_sitelevel_schedule();
+		$results = $this->get_bloglevel_schedule();
 
 		echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
 		echo '<input type="hidden" name="page" value="' . $page . '" />';
@@ -1152,21 +1095,21 @@ class automessage {
 
 		if(!empty($action) && ($action == 'editaction' || $action == 'newaction') ) {
 			$id = addslashes($_GET['id']);
-			$this->edit_action_form($id);
+			$this->edit_action_form($id, 'user');
 			return;
 		}
 
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('User Level Messages','automessage');
-		echo '<a class="button add-new-h2" href="' . add_query_arg(array('action' => 'newaction')) . '">Add New</a>';
+		echo '<a class="button add-new-h2" href="' . remove_query_arg('msg', add_query_arg(array('action' => 'newaction'))) . '">Add New</a>';
 		echo "</h2>";
 
 		echo '<br clear="all" />';
 
 		$this->show_admin_messages();
 
-		$results = $this->get_bloglevel_schedule();
+		$results = $this->get_userlevel_schedule();
 
 		echo '<form id="form-site-list" action="?page=' . $page . '&amp;action=allmessages" method="post">';
 		echo '<input type="hidden" name="page" value="' . $page . '" />';
