@@ -460,7 +460,13 @@ class automessage {
 		}
 	}
 
+	function get_queued_for_message($id) {
 
+		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_action', $id );
+
+		return $this->db->get_var( $sql );
+
+	}
 
 
 	function get_bloglevel_schedule() {
@@ -948,7 +954,7 @@ class automessage {
 				echo '</th>';
 
 				echo '<th scope="row" valign="top">';
-				echo intval($result->queued);
+				echo intval($this->get_queued_for_message( $result->ID) );
 				echo '</th>';
 
 				echo '</tr>' . "\n";
