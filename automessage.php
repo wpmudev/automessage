@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 require_once('includes/config.php');
 require_once('includes/functions.php');
 require_once('classes/class.automessage.php');
+require_once('classes/class.user.php');
 // Set up our location
 set_automessage_url(__FILE__);
 set_automessage_dir(__FILE__);
