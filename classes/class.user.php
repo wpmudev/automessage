@@ -5,7 +5,7 @@ if(!class_exists('Auto_User')) {
 
 		var $db;
 
-		function M_Membership( $id, $name = '' ) {
+		function Auto_User( $id, $name = '' ) {
 
 			global $wpdb;
 
@@ -23,6 +23,9 @@ if(!class_exists('Auto_User')) {
 		}
 
 		function schedule_message( $message_id, $timestamp ) {
+
+			update_usermeta($this->ID, '_automessage_on_action', (int) $message_id);
+			update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
 
 		}
 

@@ -448,14 +448,21 @@ class automessage {
 				if($action->menu_order == 0) {
 					// Immediate response
 
+
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'user' );
+					if(!empty($next)) {
+						$theuser =& new Auto_User( $user_id );
+						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					}
 				} else {
 					// Schedule response
+					$theuser =& new Auto_User( $user_id );
+					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days') );
 				}
 			}
 
-			$this->schedule_message($action, $user_id, $blog_id, $current_site->id);
+			//$this->schedule_message($action, $user_id, $blog_id, $current_site->id);
 		}
 	}
 
@@ -472,12 +479,18 @@ class automessage {
 
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'user' );
+					if(!empty($next)) {
+						$theuser =& new Auto_User( $user_id );
+						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					}
 				} else {
 					// Schedule response
+					$theuser =& new Auto_User( $user_id );
+					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days') );
 				}
 			}
 
-			$this->schedule_message($action, $user_id, $blog_id, 1);
+			//$this->schedule_message($action, $user_id, $blog_id, 1);
 		}
 	}
 
