@@ -110,6 +110,24 @@ class automessage {
 
 		$user = wp_get_current_user();
 		$this->user_id = $user->ID;
+
+		if(function_exists('is_multisite') && is_multisite()) {
+			add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 10, 2);
+		}
+
+		add_action('user_register', array(&$this,'add_user_message'), 10, 1);
+
+		do_action('automessage_addlisteners');
+
+		// Cron action
+		if($blog_id == 1) {
+			// Only shedule the events IF we want a global cron, or we are on the specified blog
+			if ( !wp_next_scheduled('process_automessage_hook')) {
+				wp_schedule_event(time(), 'fourdaily', 'process_automessage_hook');
+			}
+		}
+
+
 	}
 
 	function setup_menu() {
@@ -339,22 +357,7 @@ class automessage {
 
 		// This function will add all of the actions that are setup
 
-		if(is_multisite()) {
-			add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 1, 2);
-			add_action('wpmu_new_user',array(&$this,'add_user_message'), 1, 1);
-		} else {
-			add_action('user_register', array(&$this,'add_user_message'), 1, 1);
-		}
 
-		do_action('automessage_addlisteners');
-
-		// Cron action
-		if($blog_id == 1) {
-			// Only shedule the events IF we want a global cron, or we are on the specified blog
-			if ( !wp_next_scheduled('process_automessage_hook')) {
-				wp_schedule_event(time(), 'fourdaily', 'process_automessage_hook');
-			}
-		}
 
 	}
 
@@ -437,10 +440,20 @@ class automessage {
 
 	function add_blog_message($blog_id, $user_id) {
 		// This function will add a scheduled item to the blog actions
-		global $current_site;
-
 		if(is_numeric($user_id)) {
-			$action = 'wpmu_new_blog';
+
+			$action = $this->get_first_action( 'blog' );
+
+			if(!empty($action)) {
+				if($action->menu_order == 0) {
+					// Immediate response
+
+					// The get the next one
+					$next = $this->get_action_after( $action->ID, 'user' );
+				} else {
+					// Schedule response
+				}
+			}
 
 			$this->schedule_message($action, $user_id, $blog_id, $current_site->id);
 		}
@@ -448,13 +461,21 @@ class automessage {
 
 	function add_user_message($user_id) {
 		// This function will add a scheduled item to the user actions
-		global $blog_id;
 
 		if(!empty($user_id)) {
 
-			$user_id = (int) $user_id;
+			$action = $this->get_first_action( 'user' );
 
-			$action = 'wpmu_new_user';
+			if(!empty($action)) {
+				if($action->menu_order == 0) {
+					// Immediate response
+
+					// The get the next one
+					$next = $this->get_action_after( $action->ID, 'user' );
+				} else {
+					// Schedule response
+				}
+			}
 
 			$this->schedule_message($action, $user_id, $blog_id, 1);
 		}
@@ -550,7 +571,41 @@ class automessage {
 		} else {
 			return $actions;
 		}
+	}
 
+	function get_action_after( $previous_id, $level ) {
+
+		if(empty($level)) {
+			return false;
+		}
+
+		$args = array(
+			'post_type' => 'automessage',
+			'post_status' => $type,
+			'meta_key' => '_automessage_level',
+			'orderby' => 'menu_order',
+			'order' => 'ASC',
+			'meta_value' => $level
+		);
+
+		$get_actions = new WP_Query;
+		$actions = $get_actions->query($args);
+
+		if(!empty($actions)) {
+			$wantnext = false;
+			foreach($actions as $action) {
+				if($action->ID == $previous_id) {
+					$wantnext = true;
+				} else {
+					if($wantnext) {
+						return $action;
+					}
+				}
+
+			}
+		} else {
+			return $actions;
+		}
 
 	}
 
