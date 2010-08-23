@@ -18,6 +18,27 @@ if(!class_exists('Auto_User')) {
 
 		}
 
+		function sendmessage( $subject, $message ) {
+
+		}
+
+		function schedule_message( $message_id, $timestamp ) {
+
+		}
+
+		function has_message_scheduled( $message_id ) {
+
+		}
+
+		function on_message( $message_id ) {
+
+		}
+
+		function next_message() {
+
+		}
+
+
 
 
 

@@ -475,7 +475,7 @@ class automessage {
 			'post_type' => 'automessage',
 			'post_status' => $type,
 			'meta_key' => '_automessage_level',
-			'orderby' => 'menu_oder',
+			'orderby' => 'menu_order',
 			'order' => 'ASC',
 			'meta_value' => 'blog'
 		);
@@ -493,7 +493,7 @@ class automessage {
 			'post_type' => 'automessage',
 			'post_status' => $type,
 			'meta_key' => '_automessage_level',
-			'orderby' => 'menu_oder',
+			'orderby' => 'menu_order',
 			'order' => 'ASC',
 			'meta_value' => 'user'
 		);
@@ -515,8 +515,8 @@ class automessage {
 			'post_type' => 'automessage',
 			'post_status' => $type,
 			'meta_key' => '_automessage_level',
-			'orderby' => 'post_modified',
-			'order' => 'DESC',
+			'orderby' => 'menu_order',
+			'order' => 'ASC',
 			'meta_value' => $level
 		);
 
@@ -524,6 +524,33 @@ class automessage {
 		$actions = $get_actions->query($args);
 
 		return $actions;
+
+	}
+
+	function get_first_action($level) {
+
+		if(empty($level)) {
+			return false;
+		}
+
+		$args = array(
+			'post_type' => 'automessage',
+			'post_status' => $type,
+			'meta_key' => '_automessage_level',
+			'orderby' => 'menu_order',
+			'order' => 'ASC',
+			'meta_value' => $level
+		);
+
+		$get_actions = new WP_Query;
+		$actions = $get_actions->query($args);
+
+		if(!empty($actions)) {
+			return array_shift($actions);
+		} else {
+			return $actions;
+		}
+
 
 	}
 
