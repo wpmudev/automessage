@@ -7,14 +7,6 @@ class automessage {
 	// Our own link to the database class - using this means we can easily switch db libraries in just this class if required
 	var $db;
 
-	// The tables used by this plugin
-	var $tables = array('am_actions', 'am_schedule', 'am_queue');
-
-	// Table links
-	var $am_actions;
-	var $am_schedule;
-	var $am_queue;
-
 	var $user_id;
 
 	// Change this to increase or decrease the number of messages to process in any run
@@ -27,11 +19,6 @@ class automessage {
 		// Link to the database class
 		$this->db =& $wpdb;
 
-		// Set up the table variables
-		foreach($this->tables as $table) {
-			$this->$table = automessage_db_prefix($this->db, $table);
-		}
-
 		// Installation functions
 		$installed = get_automessage_option('automessage_installed', false);
 		if($installed != $this->build) {
@@ -39,6 +26,7 @@ class automessage {
 		}
 
 		add_action( 'init', array($this, 'initialise_plugin'));
+		add_action('init', array(&$this,'process_automessage'));
 
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
@@ -46,25 +34,16 @@ class automessage {
 		add_action('load-automessage_page_automessage_blogadmin', array(&$this, 'add_admin_header_automessage_blogadmin'));
 		add_action('load-automessage_page_automessage_useradmin', array(&$this, 'add_admin_header_automessage_useradmin'));
 
-		add_action('init', array(&$this,'setup_listeners'));
-
 		add_action( 'automessage_dashboard_left', array(&$this, 'dashboard_news') );
 
 		if($blog_id == 1 || !is_multisite()) {
 			// All the following actions we only want on the main blog
-
-			// Cron actions
-			add_filter( 'cron_schedules', array(&$this, 'add_schedules') );
-			// Cron actions
-			add_action('process_automessage_hook', 'process_automessage');
-
 			// Rewrites
 			add_action('generate_rewrite_rules', array(&$this, 'add_rewrite'));
 			add_filter('query_vars', array(&$this, 'add_queryvars'));
 
 			// Set up api object to enable processing by other plugins
 			add_action('pre_get_posts', array(&$this, 'process_unsubscribe_action') );
-
 		}
 
 	}
@@ -118,15 +97,6 @@ class automessage {
 		add_action('user_register', array(&$this,'add_user_message'), 10, 1);
 
 		do_action('automessage_addlisteners');
-
-		// Cron action
-		if($blog_id == 1) {
-			// Only shedule the events IF we want a global cron, or we are on the specified blog
-			if ( !wp_next_scheduled('process_automessage_hook')) {
-				wp_schedule_event(time(), 'fourdaily', 'process_automessage_hook');
-			}
-		}
-
 
 	}
 
@@ -351,65 +321,6 @@ class automessage {
 		}
 	}
 
-	function setup_listeners() {
-
-		global $blog_id;
-
-		// This function will add all of the actions that are setup
-
-
-
-	}
-
-	function send_message($message, $user, $blog_id = 0, $site_id = 0) {
-
-		if(!empty($user->user_email) && validate_email($user->user_email, false)) {
-
-			$replacements = array(	"/%blogname%/" 	=> 	get_blog_option($blog_id, 'blogname'),
-									"/%blogurl%/"	=>	get_blog_option($blog_id, 'home'),
-									"/%username%/"	=>	$user->user_login,
-									"/%usernicename%/"	=>	$user->user_nicename
-								);
-
-			if(function_exists('get_site_details')) {
-				$site = get_site_details($site_id);
-				$replacements['/%sitename%/'] = $site->sitename;
-				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
-			} else {
-				$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $site_id));
-				$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $site_id) );
-				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
-			}
-
-			$replacements = apply_filters('automessage_replacements', $replacements);
-
-			if(!empty($message->message)) {
-				$subject = stripslashes($message->subject);
-				$msg = stripslashes($message->message);
-
-				// Add in the unsubscribe text at the bottom of the message
-				$msg .= "\n\n"; // Two blank lines
-				$msg .= "-----\n"; // Footer marker
-				$msg .= __('To stop receiving messages from %sitename% click on the following link: %siteurl%unsubscribe/','automessage');
-				// Add in the user id
-				$msg .= md5($message->user_id . '16224');
-
-				$find = array_keys($replacements);
-				$replace = array_values($replacements);
-
-				$msg = preg_replace($find, $replace, $msg);
-				$subject = preg_replace($find, $replace, $subject);
-
-				// Set up the from address
-				$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . $site->domain . '>';
-				$res = @wp_mail( $user->user_email, $subject, $msg, $header );
-
-			}
-
-		}
-
-	}
-
 	function schedule_message($action, $user_id, $blog_id = 0, $site_id = 0) {
 
 		// Get the lowest day scheduled action for add site
@@ -447,12 +358,13 @@ class automessage {
 			if(!empty($action)) {
 				if($action->menu_order == 0) {
 					// Immediate response
-
+					$theuser =& new Auto_User( $user_id );
+					$theuser->set_blog_id( $blog_id );
+					$theuser->send_message( $action->post_title, $action->post_content );
 
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'user' );
 					if(!empty($next)) {
-						$theuser =& new Auto_User( $user_id );
 						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
 					}
 				} else {
@@ -462,12 +374,12 @@ class automessage {
 				}
 			}
 
-			//$this->schedule_message($action, $user_id, $blog_id, $current_site->id);
 		}
 	}
 
 	function add_user_message($user_id) {
 		// This function will add a scheduled item to the user actions
+		global $blog_id;
 
 		if(!empty($user_id)) {
 
@@ -476,11 +388,13 @@ class automessage {
 			if(!empty($action)) {
 				if($action->menu_order == 0) {
 					// Immediate response
+					$theuser =& new Auto_User( $user_id );
+					$theuser->set_blog_id( $blog_id );
+					$theuser->send_message( $action->post_title, $action->post_content );
 
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'user' );
 					if(!empty($next)) {
-						$theuser =& new Auto_User( $user_id );
 						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
 					}
 				} else {
@@ -490,7 +404,6 @@ class automessage {
 				}
 			}
 
-			//$this->schedule_message($action, $user_id, $blog_id, 1);
 		}
 	}
 
@@ -758,8 +671,6 @@ class automessage {
 		} else {
 			$metadata = array();
 		}
-
-		print_r($metadata);
 
 		echo "<div class='wrap'>";
 		echo "<h2>" . __('Edit Action', 'automessage') . "</h2>";
@@ -1235,34 +1146,51 @@ class automessage {
 
 	}
 
-	// Cron functions
+	function process_automessage() {
 
-	function queue_next_message($q) {
+		global $wpdb;
 
-		$sql = "select s.* from {$this->am_schedule} as s, {$this->am_actions} as a WHERE
-		s.action_id = a.id AND s.action_id = %d AND s.period > %d AND s.pause = 0 ORDER BY period, timeperiod ASC
-		LIMIT 0,1";
+		// grab the feeds
+		$messages = $this->get_automessagetoprocess(time());
 
-		$sched = $this->db->get_row( $this->db->prepare($sql, $q->action_id, $q->period), OBJECT );
+		// Our starting time
+		$timestart = time();
 
-		if($sched) {
-			$gapperiod = intval($sched->period - $q->period);
+		//Or processing limit
+		$timelimit = 3; // max seconds for processing
 
-			$runon = strtotime("+ $gapperiod $sched->timeperiod");
-			$this->db->insert($this->am_queue, array("schedule_id" => $sched->id, "runon" => $runon, "user_id" => $q->user_id, "site_id" => $q->site_id, "blog_id" => $q->blog_id, "sendtoemail" => $q->sendtoemail));
+		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
+		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
+			$lastprocessing = strtotime('-2 hours');
+			update_automessage_option('automessage_processing', $lastprocessing);
 		}
 
-	}
+		if(!empty($messages) && $lastprocessing <= strtotime('-2 hours')) {
+			update_automessage_option('automessage_processing', time());
 
-	function add_schedules($scheds) {
+			foreach( (array) $messages as $key => $msg) {
 
-		if(!is_array($scheds)) {
-			$scheds = array();
+				if(time() > $timestart + $timelimit) {
+					if($this->debug) {
+						// time out
+						$this->errors[] = __('Notice: Processing stopped due to ' . $timelimit . ' second timeout.','automessage');
+					}
+					break;
+				}
+
+
+
+			}
+		} else {
+			if($this->debug) {
+				// empty list or not processing
+			}
 		}
 
-		$scheds['fourdaily'] = array( 'interval' => 21600, 'display' => __('Four times daily') );
+		if(!empty($this->errors)) {
+			$this->record_error();
+		}
 
-		return $scheds;
 	}
 
 	function process_schedule() {
