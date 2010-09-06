@@ -321,34 +321,6 @@ class automessage {
 		}
 	}
 
-	function schedule_message($action, $user_id, $blog_id = 0, $site_id = 0) {
-
-		// Get the lowest day scheduled action for add site
-		$sql = "select s.* from {$this->am_schedule} as s, {$this->am_actions} as a WHERE
-		s.action_id = a.id AND a.action = %s AND s.pause = 0 ORDER BY period, timeperiod ASC
-		LIMIT 0,2";
-
-		$sched = $this->db->get_results( $this->db->prepare($sql, $action), OBJECT );
-
-		if($sched) {
-			$user = get_userdata($user_id);
-
-			foreach($sched as $s) {
-				if($s->period == 0) {
-					// If the timeperiod is 0 - then we need to send this immediately and
-					// get the next one for the schedule
-					$this->send_message($s, $user, $blog_id, $site_id);
-				} else {
-					// Otherwise we add the person to the schedule for later processing
-					$runon = strtotime("+ $s->period $s->timeperiod");
-					$this->db->insert($this->am_queue, array("schedule_id" => $s->id, "runon" => $runon, "user_id" => $user->ID, "site_id" => $site_id, "blog_id" => $blog_id, "sendtoemail" => $user->user_email));
-					break;
-				}
-			}
-		}
-
-	}
-
 	function add_blog_message($blog_id, $user_id) {
 		// This function will add a scheduled item to the blog actions
 		if(is_numeric($user_id)) {
@@ -1193,42 +1165,7 @@ class automessage {
 
 	}
 
-	function process_schedule() {
-		global $wpdb;
 
-		$tstamp = time();
-
-		$lastrun = get_automessage_option('automessage_lastrunon', 1);
-
-		// Get the queued items that should have been processed by now
-		$sql = $this->db->prepare( "SELECT q.*, s.subject, s.message, s.period, s.timeperiod, s.action_id  FROM {$this->am_queue} AS q, {$this->am_schedule} AS s, {$this->am_actions} AS a
-		WHERE q.schedule_id = s.id AND a.id = s.action_id
-		AND s.pause = 0 AND runon <= $tstamp AND runon >= $lastrun
-		ORDER BY runon LIMIT 0, " . $this->processlimit );
-
-		$queue = $this->db->get_results($sql, OBJECT);
-
-		if($queue) {
-			// We have items to process
-
-			// Set last processed
-			foreach($queue as $key => $q) {
-				// Store the timestamp
-				$lastrun = $q->runon;
-
-				// Send the email
-				$user = get_userdata($q->user_id);
-				$this->send_message($q, $user, $q->blog_id, $q->site_id);
-
-				// Find if there is another message to schedule and add it to the queue
-				$this->queue_next_message($q);
-
-				// delete the now processed item
-				$this->db->query($this->db->prepare("DELETE FROM {$this->am_queue} WHERE id = %d", $q->id));
-			}
-			update_automessage_option('automessage_lastrunon', $lastrun);
-		}
-	}
 
 	function force_process($schedule_id) {
 
@@ -1302,9 +1239,9 @@ class automessage {
 
 			// Handle unsubscribe functionality
 			if(isset($unsub)) {
-				$sql = $this->db->prepare( "DELETE FROM {$this->am_queue} WHERE MD5(CONCAT(user_id,'16224')) = %s", $unsub);
+				//$sql = $this->db->prepare( "DELETE FROM {$this->am_queue} WHERE MD5(CONCAT(user_id,'16224')) = %s", $unsub);
 
-				$this->db->query($sql);
+				//$this->db->query($sql);
 
 				$this->output_unsubscribe_message();
 			}
