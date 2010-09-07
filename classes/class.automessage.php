@@ -1118,12 +1118,23 @@ class automessage {
 
 	}
 
+	function get_automessage_users_to_process( $time = false ) {
+
+		if(!$time) {
+			return;
+		}
+
+		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value <= %s", '_automessage_run_action', (int) $time );
+
+		$users = $this->db->get_col( $sql );
+
+	}
+
 	function process_automessage() {
 
-		global $wpdb;
-
-		// grab the feeds
-		$messages = $this->get_automessagetoprocess(time());
+		// grab the users
+		$users = $this->get_automessage_users_to_process(time());
 
 		// Our starting time
 		$timestart = time();
@@ -1137,10 +1148,10 @@ class automessage {
 			update_automessage_option('automessage_processing', $lastprocessing);
 		}
 
-		if(!empty($messages) && $lastprocessing <= strtotime('-2 hours')) {
+		if(!empty($users) && $lastprocessing <= strtotime('-2 hours')) {
 			update_automessage_option('automessage_processing', time());
 
-			foreach( (array) $messages as $key => $msg) {
+			foreach( (array) $users as $user_id) {
 
 				if(time() > $timestart + $timelimit) {
 					if($this->debug) {
@@ -1150,7 +1161,22 @@ class automessage {
 					break;
 				}
 
+				// Create the user - get the message they are on and then process it
+				$theuser =& new Auto_User( $user_id );
+				$action = $this->get_action( (int) $theuser->current_action() );
 
+				if(!empty($action)) {
+					$theuser->send_message( $action->post_title, $action->post_content );
+					if(get_postmeta($action->ID, '_automessage_level') == 'user') {
+						$next = $this->get_action_after( $action->ID, 'user' );
+					} else {
+						$next = $this->get_action_after( $action->ID, 'blog' );
+					}
+
+					if(!empty($next)) {
+						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					}
+				}
 
 			}
 		} else {
@@ -1160,7 +1186,7 @@ class automessage {
 		}
 
 		if(!empty($this->errors)) {
-			$this->record_error();
+			//$this->record_error();
 		}
 
 	}
@@ -1169,33 +1195,7 @@ class automessage {
 
 	function force_process($schedule_id) {
 
-		$lastrun = get_automessage_option('automessage_lastrunon', 1);
-
-		$sql = $this->db->prepare( "SELECT q.*, s.subject, s.message, s.period, s.timeperiod, s.action_id  FROM {$this->am_queue} AS q, {$this->am_schedule} AS s, {$this->am_actions} AS a
-		WHERE q.schedule_id = s.id AND a.id = s.action_id
-		AND s.pause = 0 AND q.schedule_id <= %d AND runon >= $lastrun
-		ORDER BY runon LIMIT 0, " . $this->processlimit, $schedule_id );
-
-		$queue = $this->db->get_results($sql, OBJECT);
-
-		if($queue) {
-			// We have items to process
-			foreach($queue as $key => $q) {
-				// Store the timestamp
-				$lastrun = $q->runon;
-
-				// Send the email
-				$user = get_userdata($q->user_id);
-				$this->send_message($q, $user, $q->blog_id, $q->site_id);
-
-				// Find if there is another message to schedule and add it to the queue
-				$this->queue_next_message($q);
-
-				// delete the now processed item
-				$this->db->query($this->db->prepare("DELETE FROM {$this->am_queue} WHERE id = %d", $q->id));
-			}
-			update_automessage_option('automessage_lastrunon', $lastrun);
-		}
+		echo $schedule_id;
 
 	}
 

@@ -73,10 +73,16 @@ if(!class_exists('Auto_User')) {
 					$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . $site->domain . '>';
 					$res = @wp_mail( $this->user_email, $subject, $msg, $header );
 
+					do_action( 'automessage_sent_to', $this->ID);
+
 				}
 
 			}
 
+		}
+
+		function current_action() {
+			return get_usermeta( $this->ID, '_automessage_on_action' );
 		}
 
 		function schedule_message( $message_id, $timestamp ) {
