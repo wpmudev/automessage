@@ -335,7 +335,7 @@ class automessage {
 					$theuser->send_message( $action->post_title, $action->post_content );
 
 					// The get the next one
-					$next = $this->get_action_after( $action->ID, 'user' );
+					$next = $this->get_action_after( $action->ID, 'blog' );
 					if(!empty($next)) {
 						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
 					} else {
@@ -1312,10 +1312,14 @@ class automessage {
 			if(isset($wp_query->query_vars['unsubscribe'])) $unsub = $wp_query->query_vars['unsubscribe'];
 
 			// Handle unsubscribe functionality
-			if(isset($unsub)) {
-				//$sql = $this->db->prepare( "DELETE FROM {$this->am_queue} WHERE MD5(CONCAT(user_id,'16224')) = %s", $unsub);
+			if(!empty($unsub)) {
+				$sql = $this->db->prepare( "SELECT ID from {$this->db->users} WHERE MD5(CONCAT(ID,'16224')) = %s", $unsub);
+				$user_id = $this->db->get_var( $sql );
 
-				//$this->db->query($sql);
+				if(!empty($user_id)) {
+					$theuser =& new Auto_User( $user_id );
+					$theuser->clear_subscriptions();
+				}
 
 				$this->output_unsubscribe_message();
 			}
@@ -1365,9 +1369,7 @@ class automessage {
 			$wp_query->post_count = 1;
 			$wp_query->is_home = false;
 
-			ob_start('template');
 			load_template(TEMPLATEPATH . '/' . 'page.php');
-			ob_end_flush();
 
 			die();
 		}
