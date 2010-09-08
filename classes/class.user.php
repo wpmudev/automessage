@@ -82,14 +82,20 @@ if(!class_exists('Auto_User')) {
 		}
 
 		function current_action() {
-			return get_usermeta( $this->ID, '_automessage_on_action' );
+			return get_user_meta( $this->ID, '_automessage_on_action', true );
 		}
 
 		function schedule_message( $message_id, $timestamp ) {
 
-			update_usermeta($this->ID, '_automessage_on_action', (int) $message_id);
-			update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
+			update_user_meta($this->ID, '_automessage_on_action', (int) $message_id);
+			update_user_meta($this->ID, '_automessage_run_action', (int) $timestamp);
 
+		}
+
+		function clear_subscriptions() {
+
+			delete_user_meta($this->ID, '_automessage_on_action');
+			delete_user_meta($this->ID, '_automessage_run_action');
 		}
 
 		function has_message_scheduled( $message_id ) {

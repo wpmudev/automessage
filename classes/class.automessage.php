@@ -338,6 +338,8 @@ class automessage {
 					$next = $this->get_action_after( $action->ID, 'user' );
 					if(!empty($next)) {
 						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					} else {
+						$theuser->clear_subscriptions();
 					}
 				} else {
 					// Schedule response
@@ -368,6 +370,8 @@ class automessage {
 					$next = $this->get_action_after( $action->ID, 'user' );
 					if(!empty($next)) {
 						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					} else {
+						$theuser->clear_subscriptions();
 					}
 				} else {
 					// Schedule response
@@ -467,7 +471,7 @@ class automessage {
 		if(!empty($actions)) {
 			return array_shift($actions);
 		} else {
-			return $actions;
+			return false;
 		}
 	}
 
@@ -501,9 +505,9 @@ class automessage {
 				}
 
 			}
-		} else {
-			return $actions;
 		}
+
+		return false;
 
 	}
 
@@ -1129,6 +1133,23 @@ class automessage {
 
 		$users = $this->db->get_col( $sql );
 
+		return $users;
+
+	}
+
+	function get_forced_automessage_users_to_process( $schedule_id = false ) {
+
+		if(!$schedule_id) {
+			return;
+		}
+
+		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_action', (int) $schedule_id );
+
+		$users = $this->db->get_col( $sql );
+
+		return $users;
+
 	}
 
 	function process_automessage() {
@@ -1167,7 +1188,7 @@ class automessage {
 
 				if(!empty($action)) {
 					$theuser->send_message( $action->post_title, $action->post_content );
-					if(get_postmeta($action->ID, '_automessage_level') == 'user') {
+					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
 						$next = $this->get_action_after( $action->ID, 'user' );
 					} else {
 						$next = $this->get_action_after( $action->ID, 'blog' );
@@ -1175,6 +1196,8 @@ class automessage {
 
 					if(!empty($next)) {
 						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					} else {
+						$theuser->clear_subscriptions();
 					}
 				}
 
@@ -1195,7 +1218,58 @@ class automessage {
 
 	function force_process($schedule_id) {
 
-		echo $schedule_id;
+		// grab the users
+		$users = $this->get_forced_automessage_users_to_process( $schedule_id );
+
+		// Our starting time
+		$timestart = time();
+
+		//Or processing limit
+		$timelimit = 3; // max seconds for processing
+
+		if(!empty($users)) {
+
+			update_automessage_option('automessage_processing', time());
+
+			foreach( (array) $users as $user_id) {
+
+				if(time() > $timestart + $timelimit) {
+					if($this->debug) {
+						// time out
+						$this->errors[] = __('Notice: Processing stopped due to ' . $timelimit . ' second timeout.','automessage');
+					}
+					break;
+				}
+
+				// Create the user - get the message they are on and then process it
+				$theuser =& new Auto_User( $user_id );
+				$action = $this->get_action( (int) $theuser->current_action() );
+
+				if(!empty($action)) {
+					$theuser->send_message( $action->post_title, $action->post_content );
+					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
+						$next = $this->get_action_after( $action->ID, 'user' );
+					} else {
+						$next = $this->get_action_after( $action->ID, 'blog' );
+					}
+
+					if(!empty($next)) {
+						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+					} else {
+						$theuser->clear_subscriptions();
+					}
+				}
+
+			}
+		} else {
+			if($this->debug) {
+				// empty list or not processing
+			}
+		}
+
+		if(!empty($this->errors)) {
+			//$this->record_error();
+		}
 
 	}
 
