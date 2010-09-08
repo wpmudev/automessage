@@ -1358,9 +1358,9 @@ class automessage {
 			$post->post_excerpt = 'Your unsubscription request has been processed successfully.';
 			$post->ID = -1;
 			$post->post_status = 'publish';
-			$post->post_type = 'post';
+			$post->post_type = 'page';
 			$post->comment_status = 'closed';
-			$post->ping_status = 'open';
+			$post->ping_status = 'closed';
 			$post->comment_count = 0;
 			$post->post_date = current_time('mysql');
 			$post->post_date_gmt = current_time('mysql', 1);
@@ -1369,9 +1369,6 @@ class automessage {
 			$wp_query->post_count = 1;
 			$wp_query->is_home = false;
 
-			load_template(TEMPLATEPATH . '/' . 'page.php');
-
-			die();
 		}
 
 		return $post;
