@@ -1,5 +1,7 @@
 <?php
 
+define('AUTOMESSAGE_POLL_USERS', false);
+
 class automessage {
 
 	var $build = 5;
@@ -44,6 +46,11 @@ class automessage {
 
 			// Set up api object to enable processing by other plugins
 			add_action('pre_get_posts', array(&$this, 'process_unsubscribe_action') );
+		}
+
+		if(defined('AUTOMESSAGE_POLL_USERS') && AUTOMESSAGE_POLL_USERS === true) {
+			// We are going to circumvent any action calling issues by regularly checking for new users.
+			add_action('init', array(&$this, 'poll_new_users'));
 		}
 
 	}
@@ -94,7 +101,9 @@ class automessage {
 			add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 10, 2);
 		}
 
-		add_action('user_register', array(&$this,'add_user_message'), 10, 1);
+		if(!defined('AUTOMESSAGE_POLL_USERS') || AUTOMESSAGE_POLL_USERS === false) {
+			add_action('user_register', array(&$this,'add_user_message'), 10, 1);
+		}
 
 		do_action('automessage_addlisteners');
 
@@ -359,11 +368,13 @@ class automessage {
 
 			$action = $this->get_first_action( 'user' );
 
-			if(!empty($action)) {
+			$theuser =& new Auto_User( $user_id );
+			$theuser->set_blog_id( $blog_id );
+			$currentaction = $theuser->current_action();
+
+			if(!empty($action) && empty( $currentaction ) ) {
 				if($action->menu_order == 0) {
 					// Immediate response
-					$theuser =& new Auto_User( $user_id );
-					$theuser->set_blog_id( $blog_id );
 					$theuser->send_message( $action->post_title, $action->post_content );
 
 					// The get the next one
@@ -375,12 +386,32 @@ class automessage {
 					}
 				} else {
 					// Schedule response
-					$theuser =& new Auto_User( $user_id );
 					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days') );
 				}
 			}
 
 		}
+	}
+
+	function poll_new_users() {
+
+		$lastmax = get_automessage_option('automessage_max_ID', false);
+
+		if(empty($lastmax) || $lastmax === false || $lastmax <= 1) {
+			// first run - set it to the current maximum
+			$maxID = $this->db->get_var( $this->db->prepare( "SELECT MAX(ID) FROM {$this->db->users}" ) );
+			update_automessage_option('automessage_max_ID', $maxID);
+		} else {
+			// later runs, check the maximum user ID and process if needed.
+			$users = $this->db->get_col( $this->db->prepare( "SELECT ID FROM {$this->db->users} WHERE ID > %d", $lastmax) );
+			if(!empty($users)) {
+				update_automessage_option('automessage_max_ID', max($users) );
+				foreach($users as $user_ID) {
+					$this->add_user_message( $user_ID );
+				}
+			}
+		}
+
 	}
 
 	function get_queued_for_message($id) {
