@@ -334,11 +334,14 @@ class automessage {
 
 			$action = $this->get_first_action( 'blog' );
 
-			if(!empty($action)) {
+			$theuser =& new Auto_User( $user_id );
+			$theuser->set_blog_id( $blog_id );
+			$onaction = $theuser->on_action();
+
+			if(!empty($action) && $onaction === false ) {
+
 				if($action->menu_order == 0) {
 					// Immediate response
-					$theuser =& new Auto_User( $user_id );
-					$theuser->set_blog_id( $blog_id );
 					$theuser->send_message( $action->post_title, $action->post_content );
 
 					// The get the next one
@@ -366,11 +369,11 @@ class automessage {
 
 			$action = $this->get_first_action( 'user' );
 
-			$theuser =& new Auto_User( $user_id );
+			$theuser = new Auto_User( $user_id );
 			$theuser->set_blog_id( $blog_id );
-			$currentaction = $theuser->current_action();
+			$onaction = $theuser->on_action();
 
-			if(!empty($action) && empty( $currentaction ) ) {
+			if(!empty($action) && $onaction === false ) {
 				if($action->menu_order == 0) {
 					// Immediate response
 					$theuser->send_message( $action->post_title, $action->post_content );
@@ -425,7 +428,7 @@ class automessage {
 
 		$args = array(
 			'post_type' => 'automessage',
-			'post_status' => $type,
+			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',
@@ -443,7 +446,7 @@ class automessage {
 
 		$args = array(
 			'post_type' => 'automessage',
-			'post_status' => $type,
+			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',
@@ -465,7 +468,7 @@ class automessage {
 
 		$args = array(
 			'post_type' => 'automessage',
-			'post_status' => $type,
+			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',
@@ -487,7 +490,7 @@ class automessage {
 
 		$args = array(
 			'post_type' => 'automessage',
-			'post_status' => $type,
+			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',
@@ -512,7 +515,7 @@ class automessage {
 
 		$args = array(
 			'post_type' => 'automessage',
-			'post_status' => $type,
+			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',

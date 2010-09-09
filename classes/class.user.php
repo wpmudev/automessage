@@ -32,10 +32,10 @@ if(!class_exists('Auto_User')) {
 
 		function send_message( $subject, $message ) {
 
-			if(!empty($this->user_email) && validate_email($this->user_email, false)) {
+			if(!empty($this->user_email)) {
 
-				$replacements = array(	"/%blogname%/" 	=> 	get_blog_option($this->blog_id, 'blogname'),
-										"/%blogurl%/"	=>	get_blog_option($blog_id, 'home'),
+				$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
+										"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
 										"/%username%/"	=>	$this->user_login,
 										"/%usernicename%/"	=>	$this->user_nicename
 									);
@@ -45,10 +45,18 @@ if(!class_exists('Auto_User')) {
 					$replacements['/%sitename%/'] = $site->sitename;
 					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 				} else {
-					$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
-					$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
-					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+					if($wp_version < '3.0') {
+						$replacements['/%sitename%/'] = $replacements['/%blogname%/'];
+						$replacements['/%siteurl%/'] = $replacements['/%blogurl%/'];
+					} else {
+						// Site exists
+						$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
+						$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
+						$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+					}
+
 				}
+				$replacements['/%siteurl%/'] = untrailingslashit($replacements['/%siteurl%/']);
 
 				$replacements = apply_filters('automessage_replacements', $replacements);
 
@@ -59,7 +67,7 @@ if(!class_exists('Auto_User')) {
 					// Add in the unsubscribe text at the bottom of the message
 					$msg .= "\n\n"; // Two blank lines
 					$msg .= "-----\n"; // Footer marker
-					$msg .= __('To stop receiving messages from %sitename% click on the following link: %siteurl%unsubscribe/','automessage');
+					$msg .= __('To stop receiving messages from %sitename% click on the following link: %siteurl%/unsubscribe/','automessage');
 					// Add in the user id
 					$msg .= md5($this->ID . '16224');
 
@@ -70,7 +78,7 @@ if(!class_exists('Auto_User')) {
 					$subject = preg_replace($find, $replace, $subject);
 
 					// Set up the from address
-					$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . $site->domain . '>';
+					$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . str_replace('http://', '', $replacements['/%siteurl%/']) . '>';
 					$res = @wp_mail( $this->user_email, $subject, $msg, $header );
 
 					do_action( 'automessage_sent_to', $this->ID);
@@ -82,26 +90,90 @@ if(!class_exists('Auto_User')) {
 		}
 
 		function send_unsubscribe() {
-			$res = @wp_mail( $this->user_email, "Unsubscribe request processed", "Your unsubscribe request has been processed and you have been removed from our mailing list.\n\nThank you\n\nThe BuddyPress Team." );
+
+			$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
+									"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
+									"/%username%/"	=>	$this->user_login,
+									"/%usernicename%/"	=>	$this->user_nicename
+								);
+
+			if(function_exists('get_site_details')) {
+				$site = get_site_details($this->site_id);
+				$replacements['/%sitename%/'] = $site->sitename;
+				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+			} else {
+				if($wp_version < '3.0') {
+					$replacements['/%sitename%/'] = $replacements['/%blogname%/'];
+					$replacements['/%siteurl%/'] = $replacements['/%blogurl%/'];
+				} else {
+					// Site exists
+					$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
+					$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
+					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+				}
+
+			}
+			$replacements['/%siteurl%/'] = untrailingslashit($replacements['/%siteurl%/']);
+
+			$replacements = apply_filters('automessage_replacements', $replacements);
+
+			$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . str_replace('http://', '', $replacements['/%siteurl%/']) . '>';
+			$res = @wp_mail( $this->user_email, "Unsubscribe request processed", "Your unsubscribe request has been processed and you have been removed from our mailing list.\n\nThank you\n\nThe BuddyPress Team.", $header );
 			return $res;
 		}
 
 		function current_action() {
-			return get_user_meta( $this->ID, '_automessage_on_action', true );
+			if($wp_version < '3.0') {
+				$action = get_usermeta( $this->ID, '_automessage_on_action');
+			} else {
+				$action = get_user_meta( $this->ID, '_automessage_on_action', true );
+			}
+			if(empty($action)) {
+				return false;
+			} else {
+				if(is_array($action)) {
+					return array_shift($action);
+				} else {
+					return $action;
+				}
+			}
+		}
+
+		function on_action() {
+			if($wp_version < '3.0') {
+				$action = get_usermeta( $this->ID, '_automessage_on_action');
+			} else {
+				$action = get_user_meta( $this->ID, '_automessage_on_action', true );
+			}
+			if(empty($action)) {
+				return false;
+			} else {
+				return true;
+			}
 		}
 
 		function schedule_message( $message_id, $timestamp ) {
 
-			update_user_meta($this->ID, '_automessage_on_action', (int) $message_id);
-			update_user_meta($this->ID, '_automessage_run_action', (int) $timestamp);
+			if($wp_version < '3.0') {
+				update_usermeta($this->ID, '_automessage_on_action', (int) $message_id);
+				update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
+			} else {
+				update_user_meta($this->ID, '_automessage_on_action', (int) $message_id);
+				update_user_meta($this->ID, '_automessage_run_action', (int) $timestamp);
+			}
 
 		}
 
 		function clear_subscriptions() {
 
 			if($this->current_action()) {
-				delete_user_meta($this->ID, '_automessage_on_action');
-				delete_user_meta($this->ID, '_automessage_run_action');
+				if($wp_version < '3.0') {
+					delete_usermeta($this->ID, '_automessage_on_action');
+					delete_usermeta($this->ID, '_automessage_run_action');
+				} else {
+					delete_user_meta($this->ID, '_automessage_on_action');
+					delete_user_meta($this->ID, '_automessage_run_action');
+				}
 
 				$this->send_unsubscribe();
 			}
