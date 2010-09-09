@@ -1,7 +1,5 @@
 <?php
 
-define('AUTOMESSAGE_POLL_USERS', false);
-
 class automessage {
 
 	var $build = 5;
@@ -1350,9 +1348,9 @@ class automessage {
 				if(!empty($user_id)) {
 					$theuser =& new Auto_User( $user_id );
 					$theuser->clear_subscriptions();
+					//$theuser->send_unsubscribe();
 				}
 
-				$this->output_unsubscribe_message();
 			}
 
 		}
@@ -1400,9 +1398,35 @@ class automessage {
 			$wp_query->post_count = 1;
 			$wp_query->is_home = false;
 
+			ob_start();
+
+			load_template(TEMPLATEPATH . '/' . 'page.php');
+
+			ob_end_flush();
+
+			/**
+			 * YOU MUST DIE AT THE END.  BAD THINGS HAPPEN IF YOU DONT
+			 */
+			die();
+
 		}
 
 		return $post;
+	}
+
+	function use_template($template) {
+
+			$trequestedtemplate = 'page.php';
+
+			if ( file_exists(STYLESHEETPATH . '/' . $trequestedtemplate)) {
+				$template = STYLESHEETPATH . '/' . $requestedtemplate;
+			} else if ( file_exists(TEMPLATEPATH . '/' . $requestedtemplate) ) {
+				$template = TEMPLATEPATH . '/' . $requestedtemplate;
+			}
+
+
+		return $template;
+
 	}
 
 }

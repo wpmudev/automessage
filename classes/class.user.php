@@ -81,6 +81,11 @@ if(!class_exists('Auto_User')) {
 
 		}
 
+		function send_unsubscribe() {
+			$res = @wp_mail( $this->user_email, "Unsubscribe request processed", "Your unsubscribe request has been processed and you have been removed from our mailing list.\n\nThank you\n\nThe BuddyPress Team." );
+			return $res;
+		}
+
 		function current_action() {
 			return get_user_meta( $this->ID, '_automessage_on_action', true );
 		}
@@ -94,8 +99,13 @@ if(!class_exists('Auto_User')) {
 
 		function clear_subscriptions() {
 
-			delete_user_meta($this->ID, '_automessage_on_action');
-			delete_user_meta($this->ID, '_automessage_run_action');
+			if($this->current_action()) {
+				delete_user_meta($this->ID, '_automessage_on_action');
+				delete_user_meta($this->ID, '_automessage_run_action');
+
+				$this->send_unsubscribe();
+			}
+
 		}
 
 		function has_message_scheduled( $message_id ) {
