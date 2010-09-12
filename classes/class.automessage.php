@@ -1197,11 +1197,11 @@ class automessage {
 
 		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
 		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
-			$lastprocessing = strtotime('-30 minutes');
+			$lastprocessing = strtotime('-5 minutes');
 			update_automessage_option('automessage_processing', $lastprocessing);
 		}
 
-		if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
+		if(!empty($users) && $lastprocessing <= strtotime('-5 minutes')) {
 			update_automessage_option('automessage_processing', time());
 
 			foreach( (array) $users as $user_id) {
