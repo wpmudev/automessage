@@ -1193,15 +1193,15 @@ class automessage {
 		$timestart = time();
 
 		//Or processing limit
-		$timelimit = 3; // max seconds for processing
+		$timelimit = 5; // max seconds for processing
 
 		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
 		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
-			$lastprocessing = strtotime('-2 hours');
+			$lastprocessing = strtotime('-30 minutes');
 			update_automessage_option('automessage_processing', $lastprocessing);
 		}
 
-		if(!empty($users) && $lastprocessing <= strtotime('-2 hours')) {
+		if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
 			update_automessage_option('automessage_processing', time());
 
 			foreach( (array) $users as $user_id) {
