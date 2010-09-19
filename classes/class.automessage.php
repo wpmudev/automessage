@@ -1227,7 +1227,8 @@ class automessage {
 					}
 
 					if(!empty($next)) {
-						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+						$days = (int) $next->menu_order - (int) $action->menu_order;
+						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
 					} else {
 						$theuser->clear_subscriptions();
 					}
@@ -1286,7 +1287,8 @@ class automessage {
 					}
 
 					if(!empty($next)) {
-						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+						$days = (int) $next->menu_order - (int) $action->menu_order;
+						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
 					} else {
 						$theuser->clear_subscriptions();
 					}
@@ -1351,7 +1353,7 @@ class automessage {
 				if(!empty($user_id)) {
 					$theuser =& new Auto_User( $user_id );
 					$theuser->clear_subscriptions();
-					//$theuser->send_unsubscribe();
+					$theuser->send_unsubscribe();
 				}
 
 			}

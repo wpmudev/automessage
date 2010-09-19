@@ -175,7 +175,6 @@ if(!class_exists('Auto_User')) {
 					delete_user_meta($this->ID, '_automessage_run_action');
 				}
 
-				$this->send_unsubscribe();
 			}
 
 		}
