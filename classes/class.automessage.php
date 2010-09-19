@@ -427,6 +427,8 @@ class automessage {
 	function get_bloglevel_schedule() {
 
 		$args = array(
+			'posts_per_page' => 250,
+			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
@@ -445,6 +447,8 @@ class automessage {
 	function get_userlevel_schedule() {
 
 		$args = array(
+			'posts_per_page' => 250,
+			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
@@ -467,6 +471,8 @@ class automessage {
 		}
 
 		$args = array(
+			'posts_per_page' => 250,
+			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
@@ -489,6 +495,8 @@ class automessage {
 		}
 
 		$args = array(
+			'posts_per_page' => 250,
+			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
@@ -514,6 +522,8 @@ class automessage {
 		}
 
 		$args = array(
+			'posts_per_page' => 250,
+			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
 			'meta_key' => '_automessage_level',
