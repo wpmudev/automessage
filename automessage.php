@@ -4,7 +4,7 @@ Plugin Name: Automessage
 Plugin URI:
 Description: This plugin allows emails to be scheduled and sent to new users.
 Author: Barry (Incsub)
-Version: 1.0.5
+Version: 2.0 beta
 Author URI:
 Plugin Update URI:
 */

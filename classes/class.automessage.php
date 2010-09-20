@@ -49,6 +49,12 @@ class automessage {
 		if(defined('AUTOMESSAGE_POLL_USERS') && AUTOMESSAGE_POLL_USERS === true) {
 			// We are going to circumvent any action calling issues by regularly checking for new users.
 			add_action('init', array(&$this, 'poll_new_users'));
+		} else {
+			add_action('user_register', array(&$this,'add_user_message'), 10, 1);
+		}
+
+		if(function_exists('is_multisite') && is_multisite()) {
+			add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 10, 2);
 		}
 
 	}
@@ -94,14 +100,6 @@ class automessage {
 
 		$user = wp_get_current_user();
 		$this->user_id = $user->ID;
-
-		if(function_exists('is_multisite') && is_multisite()) {
-			add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 10, 2);
-		}
-
-		if(!defined('AUTOMESSAGE_POLL_USERS') || AUTOMESSAGE_POLL_USERS === false) {
-			add_action('user_register', array(&$this,'add_user_message'), 10, 1);
-		}
 
 		do_action('automessage_addlisteners');
 
@@ -1207,11 +1205,11 @@ class automessage {
 
 		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
 		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
-			$lastprocessing = strtotime('-5 minutes');
+			$lastprocessing = strtotime('-30 minutes');
 			update_automessage_option('automessage_processing', $lastprocessing);
 		}
 
-		if(!empty($users) && $lastprocessing <= strtotime('-5 minutes')) {
+		if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
 			update_automessage_option('automessage_processing', time());
 
 			foreach( (array) $users as $user_id) {
