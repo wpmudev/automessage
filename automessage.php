@@ -1,12 +1,11 @@
 <?php
 /*
 Plugin Name: Automessage
-Plugin URI:
+Plugin URI: http://premium.wpmudev.org/project/automatic-follow-up-emails-for-new-users
 Description: This plugin allows emails to be scheduled and sent to new users.
 Author: Barry (Incsub)
-Version: 2.0 beta
-Author URI:
-Plugin Update URI:
+Version: 2.0
+Author URI: http://caffeinatedb.com
 */
 
 /*

@@ -725,7 +725,7 @@ class automessage {
 		echo '<td valign="top">';
 
 		echo '<select name="period" style="width: 40%;">';
-		for($n = 0; $n <= 31; $n++) {
+		for($n = 0; $n <= AUTOMESSAGE_POLL_MAX_DELAY; $n++) {
 			echo "<option value='$n'";
 			if($editing->menu_order == $n)  echo ' selected="selected" ';
 			echo ">";
@@ -816,7 +816,7 @@ class automessage {
 		echo '<td valign="top">';
 
 		echo '<select name="period" style="width: 40%;">';
-		for($n = 0; $n <= 31; $n++) {
+		for($n = 0; $n <= AUTOMESSAGE_POLL_MAX_DELAY; $n++) {
 			echo "<option value='$n'>";
 			switch($n) {
 				case 0: 	echo __("Send immediately", 'automessage');
