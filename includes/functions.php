@@ -96,4 +96,79 @@ function process_automessage() {
 	$automsg->process_schedule();
 }
 
+// Dashboard options
+function AM_oldtablesexist() {
+
+	global $wpdb;
+
+	$sql = $wpdb->prepare( "SHOW TABLES LIKE %s", $wpdb->base_prefix . 'am_queue' );
+
+	$col = $wpdb->get_col( $sql );
+
+	if(!empty($col)) {
+		return true;
+	} else {
+		return false;
+	}
+
+}
+
+function AM_movesitemessages() {
+
+}
+
+function AM_moveusermessages() {
+
+}
+
+function AM_transfer() {
+	?>
+	<div class="postbox " id="dashboard_right_now">
+		<h3 class="hndle"><span><?php _e('Data migration','automessage'); ?></span></h3>
+		<div class="inside">
+			<?php
+			if(AM_oldtablesexist()) {
+				?>
+				<p><?php _e('You have a previous install of Automessage on this server to migrate from.','automessage'); ?></p>
+				<p><?php _e('Click on the button below to start a migration. This may take some time.','automessage'); ?></p>
+
+				<?php
+				if(!empty($_GET['migrate'])) {
+					check_admin_referer('automessage_migrate');
+					?>
+					<p><strong><?php _e('Migrating data.','automessage'); ?></strong></p>
+					<p><?php _e('Please wait whilst we migrate your data.','automessage'); ?></p>
+					<p><strong>1.</strong> <?php _e('Moving blog level messages...','automessage'); ?></p>
+					<?php echo AM_movesitemessages(); ?>
+					<p><strong>2.</strong> <?php _e('Moving user level messages...','automessage'); ?></p>
+					<?php echo AM_moveusermessages(); ?>
+					<p><strong><?php _e('Migration complete.','automessage'); ?></strong></p>
+					<?php
+				} else {
+					?>
+					<form method='GET' action=''>
+						<?php wp_nonce_field('automessage_migrate'); ?>
+						<p>
+							<input type='hidden' name='page' value='<?php echo 'automessage'; ?>' />
+							<input type='submit' name='migrate' value='Migrate data' />
+						</p>
+					</form>
+
+					<?php
+				}
+
+			} else {
+				?>
+				<p>
+					<?php _e('You have not got a previous install of Automessage on this server to migrate from.','automessage'); ?>
+				</p>
+				<?php
+			}
+			?>
+			<br class="clear">
+		</div>
+	</div>
+	<?php
+}
+add_action( 'automessage_dashboard_right', 'AM_transfer' );
 ?>
