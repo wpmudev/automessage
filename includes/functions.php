@@ -115,12 +115,14 @@ function AM_oldtablesexist() {
 
 function AM_addaction($hook, $subject, $message, $period, $type, $paused = 0) {
 
+		global $user;
+
 		$post = array(
 		'post_title' => $subject,
 		'post_content' => $message,
 		'post_name' => sanitize_title($subject),
 		'post_status' => 'private', // You can also make this pending, or whatever you want, really.
-		'post_author' => $this->user_id,
+		'post_author' => $user->ID,
 		'post_category' => array(get_option('default_category')),
 		'post_type' => 'automessage',
 		'comment_status' => 'closed',
@@ -156,6 +158,7 @@ function AM_movesitemessages() {
 
 			//transfer the users
 			$scheds = $wpdb->get_results( $wpdb->prepare("SELECT user_id, runon FROM {$wpdb->base_prefix}am_queue WHERE schedule_id = %d", $action->id) );
+
 			foreach((array) $scheds as $sched) {
 				update_user_meta($sched->user_id, '_automessage_run_action', $sched->runon);
 				update_user_meta($sched->user_id, '_automessage_on_action', $message_id);
@@ -179,6 +182,7 @@ function AM_moveusermessages() {
 
 			//transfer the users
 			$scheds = $wpdb->get_results( $wpdb->prepare("SELECT user_id, runon FROM {$wpdb->base_prefix}am_queue WHERE schedule_id = %d", $action->id) );
+
 			foreach((array) $scheds as $sched) {
 				update_user_meta($sched->user_id, '_automessage_run_action', $sched->runon);
 				update_user_meta($sched->user_id, '_automessage_on_action', $message_id);
