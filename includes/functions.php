@@ -241,5 +241,5 @@ function AM_transfer() {
 	</div>
 	<?php
 }
-add_action( 'automessage_dashboard_right', 'AM_transfer' );
+if(defined('AUTOMESSAGE_SHOW_MIGRATE') && AUTOMESSAGE_SHOW_MIGRATE == true) add_action( 'automessage_dashboard_right', 'AM_transfer' );
 ?>

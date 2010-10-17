@@ -5,4 +5,6 @@ define( 'AUTOMESSSAGE_GLOBAL_TABLES', false );
 define('AUTOMESSAGE_POLL_USERS', false);
 // The maximum delay in days that a message can be scheduled
 define('AUTOMESSAGE_POLL_MAX_DELAY', 31);
+// Enable migration
+define('AUTOMESSAGE_SHOW_MIGRATE', false);
 ?>
