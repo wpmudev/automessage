@@ -113,11 +113,78 @@ function AM_oldtablesexist() {
 
 }
 
+function AM_addaction($hook, $subject, $message, $period, $type, $paused = 0) {
+
+		$post = array(
+		'post_title' => $subject,
+		'post_content' => $message,
+		'post_name' => sanitize_title($subject),
+		'post_status' => 'private', // You can also make this pending, or whatever you want, really.
+		'post_author' => $this->user_id,
+		'post_category' => array(get_option('default_category')),
+		'post_type' => 'automessage',
+		'comment_status' => 'closed',
+		'menu_order' => $period
+		);
+
+		if($paused == 1) {
+			$post['post_status'] = 'draft';
+		}
+
+		// update the post
+		$message_id = wp_insert_post($post);
+
+		if(!is_wp_error($message_id)) {
+			update_metadata('post', $message_id, '_automessage_hook', $hook);
+			update_metadata('post', $message_id, '_automessage_level', $type);
+			update_metadata('post', $message_id, '_automessage_period', $period . ' day');
+		}
+
+		return $message_id;
+}
+
 function AM_movesitemessages() {
+
+	global $wpdb;
+
+	$sql = $wpdb->prepare( "SELECT * FROM {$wpdb->base_prefix}am_schedule WHERE action_id = 1 ORDER by period ASC");
+
+	$actions = $wpdb->get_results( $sql );
+	if(!empty($actions)) {
+		foreach($actions as $action) {
+			$message_id = AM_addaction('wpmu_new_blog', $action->subject, $action->message, $action->period, 'blog');
+
+			//transfer the users
+			$scheds = $wpdb->get_results( $wpdb->prepare("SELECT user_id, runon FROM {$wpdb->base_prefix}am_queue WHERE schedule_id = %d", $action->id) );
+			foreach((array) $scheds as $sched) {
+				update_user_meta($sched->user_id, '_automessage_run_action', $sched->runon);
+				update_user_meta($sched->user_id, '_automessage_on_action', $message_id);
+			}
+
+		}
+	}
 
 }
 
 function AM_moveusermessages() {
+
+	global $wpdb;
+
+	$sql = $wpdb->prepare( "SELECT * FROM {$wpdb->base_prefix}am_schedule WHERE action_id = 2 ORDER by period ASC");
+
+	$actions = $wpdb->get_results( $sql );
+	if(!empty($actions)) {
+		foreach($actions as $action) {
+			$message_id = AM_addaction('wpmu_new_user', $action->subject, $action->message, $action->period, 'user');
+
+			//transfer the users
+			$scheds = $wpdb->get_results( $wpdb->prepare("SELECT user_id, runon FROM {$wpdb->base_prefix}am_queue WHERE schedule_id = %d", $action->id) );
+			foreach((array) $scheds as $sched) {
+				update_user_meta($sched->user_id, '_automessage_run_action', $sched->runon);
+				update_user_meta($sched->user_id, '_automessage_on_action', $message_id);
+			}
+		}
+	}
 
 }
 
