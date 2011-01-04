@@ -25,6 +25,8 @@ class automessage {
 			$this->install();
 		}
 
+		add_action( 'plugins_loaded', array(&$this, 'load_textdomain'));
+
 		add_action( 'init', array($this, 'initialise_plugin'));
 		add_action('init', array(&$this,'process_automessage'));
 
@@ -65,6 +67,29 @@ class automessage {
 
 	function automessage() {
 		$this->__construct();
+	}
+
+	function load_textdomain() {
+
+		$locale = apply_filters( 'automessage_locale', get_locale() );
+		$mofile = automessage_dir( "languages/automessage-$locale.mo" );
+
+		if ( file_exists( $mofile ) )
+			load_textdomain( 'automessage', $mofile );
+
+	}
+
+	function add_update_check() {
+		/* -------------------- Update Notifications Notice -------------------- */
+		if ( !function_exists( 'wdp_un_check' ) ) {
+		  add_action( 'admin_notices', 'wdp_un_check', 5 );
+		  add_action( 'network_admin_notices', 'wdp_un_check', 5 );
+		  function wdp_un_check() {
+		    if ( !class_exists( 'WPMUDEV_Update_Notifications' ) && current_user_can( 'edit_users' ) )
+		      echo '<div class="error fade"><p>' . __('Please install the latest version of <a href="http://premium.wpmudev.org/project/update-notifications/" title="Download Now &raquo;">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href="http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/">More information &raquo;</a>', 'wpmudev') . '</a></p></div>';
+		  }
+		}
+		/* --------------------------------------------------------------------- */
 	}
 
 	function initialise_plugin() {
@@ -144,6 +169,8 @@ class automessage {
 		global $action, $page;
 
 		wp_reset_vars( array('action', 'page') );
+
+		$this->add_update_check();
 
 		wp_enqueue_style( 'automessageadmincss', automessage_url('css/automessage.css'), array(), $this->build );
 	}
@@ -1217,7 +1244,7 @@ class automessage {
 				if(time() > $timestart + $timelimit) {
 					if($this->debug) {
 						// time out
-						$this->errors[] = __('Notice: Processing stopped due to ' . $timelimit . ' second timeout.','automessage');
+						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
 					}
 					break;
 				}
@@ -1277,7 +1304,7 @@ class automessage {
 				if(time() > $timestart + $timelimit) {
 					if($this->debug) {
 						// time out
-						$this->errors[] = __('Notice: Processing stopped due to ' . $timelimit . ' second timeout.','automessage');
+						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
 					}
 					break;
 				}
