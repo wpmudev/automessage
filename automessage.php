@@ -7,7 +7,6 @@ Author: Barry (Incsub)
 Version: 2.0.2
 Author URI: http://caffeinatedb.com
 WDP ID: 81
-Network: true
 */
 
 /*
