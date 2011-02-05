@@ -39,6 +39,8 @@ if(!class_exists('Auto_User')) {
 
 		function send_message( $subject, $message ) {
 
+			global $wp_version;
+
 			if(!empty($this->user_email)) {
 
 				if($wp_version < '3.0') {
@@ -118,6 +120,8 @@ if(!class_exists('Auto_User')) {
 
 		function send_unsubscribe() {
 
+			global $wp_version;
+
 			$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
 									"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
 									"/%username%/"	=>	$this->user_login,
@@ -150,6 +154,9 @@ if(!class_exists('Auto_User')) {
 		}
 
 		function current_action() {
+
+			global $wp_version;
+
 			if($wp_version < '3.0') {
 				$action = get_usermeta( $this->ID, '_automessage_on_action');
 			} else {
@@ -167,6 +174,9 @@ if(!class_exists('Auto_User')) {
 		}
 
 		function on_action() {
+
+			global $wp_version;
+
 			if($wp_version < '3.0') {
 				$action = get_usermeta( $this->ID, '_automessage_on_action');
 			} else {
@@ -181,6 +191,8 @@ if(!class_exists('Auto_User')) {
 
 		function schedule_message( $message_id, $timestamp ) {
 
+			global $wp_version;
+
 			if($wp_version < '3.0') {
 				update_usermeta($this->ID, '_automessage_on_action', (int) $message_id);
 				update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
@@ -192,6 +204,8 @@ if(!class_exists('Auto_User')) {
 		}
 
 		function clear_subscriptions() {
+
+			global $wp_version;
 
 			if($this->current_action()) {
 				if($wp_version < '3.0') {
