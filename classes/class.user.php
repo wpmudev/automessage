@@ -24,6 +24,13 @@ if(!class_exists('Auto_User')) {
 
 		function set_blog_id( $blog_id ) {
 			$this->blog_id = (int) $blog_id;
+
+			if($wp_version < '3.0') {
+				update_usermeta($this->ID, '_automessage_on_blog', (int) $blog_id);
+			} else {
+				update_user_meta($this->ID, '_automessage_on_blog', (int) $blog_id);
+			}
+
 		}
 
 		function set_site_id( $site_id ) {
@@ -34,11 +41,31 @@ if(!class_exists('Auto_User')) {
 
 			if(!empty($this->user_email)) {
 
-				$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
-										"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
-										"/%username%/"	=>	$this->user_login,
-										"/%usernicename%/"	=>	$this->user_nicename
-									);
+				if($wp_version < '3.0') {
+					$blog_id = get_usermeta( $this->ID, '_automessage_on_blog');
+				} else {
+					$blog_id = get_user_meta( $this->ID, '_automessage_on_blog', true );
+				}
+
+				if(empty($blog_id)) {
+					$blog_id = $this->blog_id;
+				}
+
+				if(function_exists('get_blog_option')) {
+					$replacements = array(	"/%blogname%/" 	=> 	get_blog_option( $blog_id,'blogname'),
+											"/%blogurl%/"	=>	untrailingslashit(get_blog_option( $blog_id,'home')),
+											"/%username%/"	=>	$this->user_login,
+											"/%usernicename%/"	=>	$this->user_nicename
+										);
+				} else {
+					$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
+											"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
+											"/%username%/"	=>	$this->user_login,
+											"/%usernicename%/"	=>	$this->user_nicename
+										);
+				}
+
+
 
 				if(function_exists('get_site_details')) {
 					$site = get_site_details($this->site_id);
