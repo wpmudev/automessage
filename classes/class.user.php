@@ -25,11 +25,7 @@ if(!class_exists('Auto_User')) {
 		function set_blog_id( $blog_id ) {
 			$this->blog_id = (int) $blog_id;
 
-			if($wp_version < '3.0') {
-				update_usermeta($this->ID, '_automessage_on_blog', (int) $blog_id);
-			} else {
-				update_user_meta($this->ID, '_automessage_on_blog', (int) $blog_id);
-			}
+			update_user_meta($this->ID, '_automessage_on_blog', (int) $blog_id);
 
 		}
 
@@ -74,16 +70,10 @@ if(!class_exists('Auto_User')) {
 					$replacements['/%sitename%/'] = $site->sitename;
 					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 				} else {
-					if($wp_version < '3.0') {
-						$replacements['/%sitename%/'] = $replacements['/%blogname%/'];
-						$replacements['/%siteurl%/'] = $replacements['/%blogurl%/'];
-					} else {
-						// Site exists
-						$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
-						$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
-						$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
-					}
-
+					// Site exists
+					$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
+					$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
+					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 				}
 				$replacements['/%siteurl%/'] = untrailingslashit($replacements['/%siteurl%/']);
 
@@ -133,16 +123,10 @@ if(!class_exists('Auto_User')) {
 				$replacements['/%sitename%/'] = $site->sitename;
 				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 			} else {
-				if($wp_version < '3.0') {
-					$replacements['/%sitename%/'] = $replacements['/%blogname%/'];
-					$replacements['/%siteurl%/'] = $replacements['/%blogurl%/'];
-				} else {
-					// Site exists
-					$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
-					$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
-					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
-				}
-
+				// Site exists
+				$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
+				$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
+				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 			}
 			$replacements['/%siteurl%/'] = untrailingslashit($replacements['/%siteurl%/']);
 
@@ -155,13 +139,8 @@ if(!class_exists('Auto_User')) {
 
 		function current_action() {
 
-			global $wp_version;
+			$action = get_user_meta( $this->ID, '_automessage_on_action', true );
 
-			if($wp_version < '3.0') {
-				$action = get_usermeta( $this->ID, '_automessage_on_action');
-			} else {
-				$action = get_user_meta( $this->ID, '_automessage_on_action', true );
-			}
 			if(empty($action)) {
 				return false;
 			} else {
@@ -175,13 +154,8 @@ if(!class_exists('Auto_User')) {
 
 		function on_action() {
 
-			global $wp_version;
+			$action = get_user_meta( $this->ID, '_automessage_on_action', true );
 
-			if($wp_version < '3.0') {
-				$action = get_usermeta( $this->ID, '_automessage_on_action');
-			} else {
-				$action = get_user_meta( $this->ID, '_automessage_on_action', true );
-			}
 			if(empty($action)) {
 				return false;
 			} else {
@@ -191,31 +165,16 @@ if(!class_exists('Auto_User')) {
 
 		function schedule_message( $message_id, $timestamp ) {
 
-			global $wp_version;
-
-			if($wp_version < '3.0') {
-				update_usermeta($this->ID, '_automessage_on_action', (int) $message_id);
-				update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-			} else {
-				update_user_meta($this->ID, '_automessage_on_action', (int) $message_id);
-				update_user_meta($this->ID, '_automessage_run_action', (int) $timestamp);
-			}
+			update_user_meta($this->ID, '_automessage_on_action', (int) $message_id);
+			update_user_meta($this->ID, '_automessage_run_action', (int) $timestamp);
 
 		}
 
 		function clear_subscriptions() {
 
-			global $wp_version;
-
 			if($this->current_action()) {
-				if($wp_version < '3.0') {
-					delete_usermeta($this->ID, '_automessage_on_action');
-					delete_usermeta($this->ID, '_automessage_run_action');
-				} else {
-					delete_user_meta($this->ID, '_automessage_on_action');
-					delete_user_meta($this->ID, '_automessage_run_action');
-				}
-
+				delete_user_meta($this->ID, '_automessage_on_action');
+				delete_user_meta($this->ID, '_automessage_run_action');
 			}
 
 		}
