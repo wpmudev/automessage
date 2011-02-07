@@ -56,7 +56,13 @@ class automessage {
 		}
 
 		if(function_exists('is_multisite') && is_multisite()) {
-			add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 10, 2);
+			if(defined('AUTOMESSAGE_POLL_BLOGS') && AUTOMESSAGE_POLL_BLOGS === true) {
+				// We are going to circumvent any action calling issues by regularly checking for new users.
+				add_action('init', array(&$this, 'poll_new_blogs'));
+			} else {
+				add_action('wpmu_new_blog',array(&$this,'add_blog_message'), 10, 2);
+			}
+
 		}
 
 	}
@@ -424,6 +430,31 @@ class automessage {
 				update_automessage_option('automessage_max_ID', max($users) );
 				foreach($users as $user_ID) {
 					$this->add_user_message( $user_ID );
+				}
+			}
+		}
+
+	}
+
+	function poll_new_blogs() {
+
+		$lastmax = get_automessage_option('automessage_max_blog_ID', false);
+
+		if(empty($lastmax) || $lastmax === false || $lastmax <= 1) {
+			// first run - set it to the current maximum
+			$maxID = $this->db->get_var( $this->db->prepare( "SELECT MAX(blog_id) FROM {$this->db->blogs}" ) );
+			update_automessage_option('automessage_max_blog_ID', $maxID);
+		} else {
+			// later runs, check the maximum user ID and process if needed.
+			$blogs = $this->db->get_col( $this->db->prepare( "SELECT blog_id FROM {$this->db->blogs} WHERE blog_id > %d", $lastmax) );
+			if(!empty($blogs)) {
+				update_automessage_option('automessage_max_blog_ID', max($blogs) );
+				foreach($blogs as $blog_ID) {
+					// Get the user_id of the person we think created the blog
+					$user_id = $this->db->get_col( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = 'primary_blog' AND meta_value > %s", $blog_ID) );
+					if(!empty($user_id)) {
+						$this->add_blog_message( $blog_ID, $user_id );
+					}
 				}
 			}
 		}
