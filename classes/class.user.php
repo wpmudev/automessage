@@ -35,15 +35,9 @@ if(!class_exists('Auto_User')) {
 
 		function send_message( $subject, $message ) {
 
-			global $wp_version;
-
 			if(!empty($this->user_email)) {
 
-				if($wp_version < '3.0') {
-					$blog_id = get_usermeta( $this->ID, '_automessage_on_blog');
-				} else {
-					$blog_id = get_user_meta( $this->ID, '_automessage_on_blog', true );
-				}
+				$blog_id = get_user_meta( $this->ID, '_automessage_on_blog', true );
 
 				if(empty($blog_id)) {
 					$blog_id = $this->blog_id;
@@ -110,8 +104,6 @@ if(!class_exists('Auto_User')) {
 
 		function send_unsubscribe() {
 
-			global $wp_version;
-
 			$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
 									"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
 									"/%username%/"	=>	$this->user_login,
@@ -137,9 +129,9 @@ if(!class_exists('Auto_User')) {
 			return $res;
 		}
 
-		function current_action() {
+		function current_action( $type = 'user') {
 
-			$action = get_user_meta( $this->ID, '_automessage_on_action', true );
+			$action = get_user_meta( $this->ID, '_automessage_on_' . $type . '_action', true );
 
 			if(empty($action)) {
 				return false;
@@ -152,9 +144,9 @@ if(!class_exists('Auto_User')) {
 			}
 		}
 
-		function on_action() {
+		function on_action( $type = 'user') {
 
-			$action = get_user_meta( $this->ID, '_automessage_on_action', true );
+			$action = get_user_meta( $this->ID, '_automessage_on_' . $type . '_action', true );
 
 			if(empty($action)) {
 				return false;
@@ -163,18 +155,18 @@ if(!class_exists('Auto_User')) {
 			}
 		}
 
-		function schedule_message( $message_id, $timestamp ) {
+		function schedule_message( $message_id, $timestamp, $type = 'user' ) {
 
-			update_user_meta($this->ID, '_automessage_on_action', (int) $message_id);
-			update_user_meta($this->ID, '_automessage_run_action', (int) $timestamp);
+			update_user_meta($this->ID, '_automessage_on_' . $type . '_action', (int) $message_id);
+			update_user_meta($this->ID, '_automessage_run_' . $type . '_action', (int) $timestamp);
 
 		}
 
-		function clear_subscriptions() {
+		function clear_subscriptions( $type = 'user') {
 
 			if($this->current_action()) {
-				delete_user_meta($this->ID, '_automessage_on_action');
-				delete_user_meta($this->ID, '_automessage_run_action');
+				delete_user_meta($this->ID, '_automessage_on_' . $type . '_action');
+				delete_user_meta($this->ID, '_automessage_run_' . $type . '_action');
 			}
 
 		}
