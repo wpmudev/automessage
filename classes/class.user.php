@@ -12,7 +12,7 @@ if(!class_exists('Auto_User')) {
 			global $wpdb, $blog_id, $site_id;
 
 			if($id != 0) {
-				parent::WP_User( $id, $name = '' );
+				parent::__construct( $id, $name = '' );
 			}
 
 
