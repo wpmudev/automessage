@@ -357,7 +357,7 @@ class automessage {
 
 			$theuser =& new Auto_User( $user_id );
 			$theuser->set_blog_id( $blog_id );
-			$onaction = $theuser->on_action();
+			$onaction = $theuser->on_action( 'blog' );
 
 			if(!empty($action) && $onaction === false ) {
 
@@ -368,14 +368,14 @@ class automessage {
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'blog' );
 					if(!empty($next)) {
-						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days'), 'blog' );
 					} else {
-						$theuser->clear_subscriptions();
+						$theuser->clear_subscriptions( 'blog' );
 					}
 				} else {
 					// Schedule response
 					$theuser =& new Auto_User( $user_id );
-					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days') );
+					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), 'blog' );
 				}
 			}
 
@@ -392,7 +392,7 @@ class automessage {
 
 			$theuser = new Auto_User( $user_id );
 			$theuser->set_blog_id( $blog_id );
-			$onaction = $theuser->on_action();
+			$onaction = $theuser->on_action( 'user' );
 
 			if(!empty($action) && $onaction === false ) {
 				if($action->menu_order == 0) {
@@ -402,13 +402,13 @@ class automessage {
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'user' );
 					if(!empty($next)) {
-						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days') );
+						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days'), 'user' );
 					} else {
-						$theuser->clear_subscriptions();
+						$theuser->clear_subscriptions( 'user' );
 					}
 				} else {
 					// Schedule response
-					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days') );
+					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), 'user' );
 				}
 			}
 
@@ -465,7 +465,7 @@ class automessage {
 
 	function get_queued_for_message($id) {
 
-		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_action', $id );
+		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key LIKE %s AND meta_value = %s", '_automessage_on_%_action', $id );
 
 		return $this->db->get_var( $sql );
 
