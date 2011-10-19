@@ -447,15 +447,17 @@ class automessage {
 		} else {
 			// later runs, check the maximum user ID and process if needed.
 			$blogs = $this->db->get_col( $this->db->prepare( "SELECT blog_id FROM {$this->db->blogs} WHERE blog_id > %d", $lastmax) );
+
 			if(!empty($blogs)) {
-				update_automessage_option('automessage_max_blog_ID', max($blogs) );
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
-					$user_id = $this->db->get_col( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = 'primary_blog' AND meta_value = %s", $blog_ID) );
+					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = 'wp_" . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}') );
+
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
 					}
 				}
+				update_automessage_option('automessage_max_blog_ID', max($blogs) );
 			}
 		}
 
