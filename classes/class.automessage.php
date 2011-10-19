@@ -451,7 +451,7 @@ class automessage {
 				update_automessage_option('automessage_max_blog_ID', max($blogs) );
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
-					$user_id = $this->db->get_col( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = 'primary_blog' AND meta_value > %s", $blog_ID) );
+					$user_id = $this->db->get_col( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = 'primary_blog' AND meta_value = %s", $blog_ID) );
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
 					}
