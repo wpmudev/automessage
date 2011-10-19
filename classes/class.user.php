@@ -65,9 +65,17 @@ if(!class_exists('Auto_User')) {
 					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 				} else {
 					// Site exists
-					$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
-					$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
-					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+					if(!empty($this->db->sitemeta)) {
+						$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
+						$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
+						$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+					} else {
+						// Not a multisite install
+						$replacements['/%sitename%/'] = $replacements['/%blogname%/'];
+						$replacements['/%siteurl%/'] = $replacements['/%blogurl%/'];
+					}
+
+
 				}
 				$replacements['/%siteurl%/'] = untrailingslashit($replacements['/%siteurl%/']);
 
@@ -116,9 +124,15 @@ if(!class_exists('Auto_User')) {
 				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
 			} else {
 				// Site exists
-				$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
-				$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
-				$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+				if(!empty($this->db->sitemeta)) {
+					$site = $this->db->get_row( $this->db->prepare("SELECT * FROM {$this->db->site} WHERE id = %d", $this->site_id));
+					$replacements['/%sitename%/'] = $this->db->get_var( $this->db->prepare("SELECT meta_value FROM {$this->db->sitemeta} WHERE meta_key = 'site_name' AND site_id = %d", $this->site_id) );
+					$replacements['/%siteurl%/'] = 'http://' . $site->domain . $site->path;
+				} else {
+					// Not a multisite install
+					$replacements['/%sitename%/'] = $replacements['/%blogname%/'];
+					$replacements['/%siteurl%/'] = $replacements['/%blogurl%/'];
+				}
 			}
 			$replacements['/%siteurl%/'] = untrailingslashit($replacements['/%siteurl%/']);
 
