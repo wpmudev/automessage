@@ -36,6 +36,6 @@ set_automessage_url(__FILE__);
 set_automessage_dir(__FILE__);
 
 // Instantiate the class
-$automsg =& new automessage();
+$automsg = new automessage();
 
 ?>

@@ -178,10 +178,11 @@ if(!class_exists('Auto_User')) {
 
 		function clear_subscriptions( $type = 'user') {
 
-			if($this->current_action()) {
+			if($this->current_action( $type )) {
 				delete_user_meta($this->ID, '_automessage_on_' . $type . '_action');
 				delete_user_meta($this->ID, '_automessage_run_' . $type . '_action');
 			}
+
 
 		}
 

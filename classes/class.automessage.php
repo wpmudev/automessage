@@ -355,7 +355,7 @@ class automessage {
 
 			$action = $this->get_first_action( 'blog' );
 
-			$theuser =& new Auto_User( $user_id );
+			$theuser = new Auto_User( $user_id );
 			$theuser->set_blog_id( $blog_id );
 			$onaction = $theuser->on_action( 'blog' );
 
@@ -374,7 +374,7 @@ class automessage {
 					}
 				} else {
 					// Schedule response
-					$theuser =& new Auto_User( $user_id );
+					$theuser = new Auto_User( $user_id );
 					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), 'blog' );
 				}
 			}
@@ -1273,7 +1273,7 @@ class automessage {
 				}
 
 				// Create the user - get the message they are on and then process it
-				$theuser =& new Auto_User( $user_id );
+				$theuser = new Auto_User( $user_id );
 				$action = $this->get_action( (int) $theuser->current_action() );
 
 				if(!empty($action)) {
@@ -1333,7 +1333,7 @@ class automessage {
 				}
 
 				// Create the user - get the message they are on and then process it
-				$theuser =& new Auto_User( $user_id );
+				$theuser = new Auto_User( $user_id );
 				$action = $this->get_action( (int) $theuser->current_action() );
 
 				if(!empty($action)) {
@@ -1409,8 +1409,9 @@ class automessage {
 				$user_id = $this->db->get_var( $sql );
 
 				if(!empty($user_id)) {
-					$theuser =& new Auto_User( $user_id );
-					$theuser->clear_subscriptions();
+					$theuser = new Auto_User( $user_id );
+					$theuser->clear_subscriptions( 'user' );
+					$theuser->clear_subscriptions( 'blog' );
 					$theuser->send_unsubscribe();
 				}
 
