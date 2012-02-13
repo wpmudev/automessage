@@ -28,7 +28,8 @@ class automessage {
 		add_action( 'plugins_loaded', array(&$this, 'load_textdomain'));
 
 		add_action( 'init', array($this, 'initialise_plugin'));
-		add_action('init', array(&$this,'process_automessage'));
+		add_action('init', array(&$this,'process_user_automessage'));
+		add_action('init', array(&$this,'process_blog_automessage'));
 
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
@@ -451,7 +452,7 @@ class automessage {
 			if(!empty($blogs)) {
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
-					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = 'wp_" . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}') );
+					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}') );
 
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
@@ -741,6 +742,13 @@ class automessage {
 		echo "<div class='wrap'>";
 		echo "<h2>" . __('Edit Action', 'automessage') . "</h2>";
 
+		echo '<div id="poststuff" class="metabox-holder">';
+		?>
+		<div class="postbox">
+			<h3 class="hndle" style='cursor:auto;'><span><?php _e('Edit Action','automessage'); ?></span></h3>
+			<div class="inside">
+		<?php
+
 		echo '<form method="post" action="?page=' . $page . '">';
 		echo '<input type="hidden" name="ID" value="' . $editing->ID . '" />';
 		echo "<input type='hidden' name='type' value='" . $type . "' />";
@@ -823,6 +831,9 @@ class automessage {
 		echo '</form>';
 
 		echo "</div>";
+		echo "</div>";
+
+		echo "</div>";
 	}
 
 	function add_action_form($type) {
@@ -834,6 +845,13 @@ class automessage {
 		echo "<h2>" . __('Add Action', 'automessage') . "</h2>";
 
 		echo "<a name='form-add-action' ></a>\n";
+
+		echo '<div id="poststuff" class="metabox-holder">';
+		?>
+		<div class="postbox">
+			<h3 class="hndle" style='cursor:auto;'><span><?php _e('Add Action','automessage'); ?></span></h3>
+			<div class="inside">
+		<?php
 
 		echo '<form method="post" action="?page=' . $page . '">';
 		echo "<input type='hidden' name='action' value='addaction' />";
@@ -911,7 +929,8 @@ class automessage {
 		echo '<input class="button" type="submit" name="go" value="' . __('Add action', 'automessage') . '" /></p>';
 		echo '</form>';
 
-
+		echo "</div>";
+		echo "</div>";
 
 		echo "</div>";
 
@@ -1133,7 +1152,7 @@ class automessage {
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('Blog Level Messages','automessage');
-		echo '<a class="button add-new-h2" href="' . remove_query_arg('msg', add_query_arg(array('action' => 'newaction'))) . '">Add New</a>';
+		echo '<a class="add-new-h2" href="' . remove_query_arg('msg', add_query_arg(array('action' => 'newaction'))) . '">' . __('Add New','automessage') . '</a>';
 		echo "</h2>";
 
 		$this->show_admin_messages();
@@ -1180,7 +1199,7 @@ class automessage {
 		echo "<div class='wrap'  style='position:relative;'>";
 		echo '<div class="icon32" id="icon-edit-pages"><br></div>';
 		echo "<h2>" . __('User Level Messages','automessage');
-		echo '<a class="button add-new-h2" href="' . remove_query_arg('msg', add_query_arg(array('action' => 'newaction'))) . '">Add New</a>';
+		echo '<a class="add-new-h2" href="' . remove_query_arg('msg', add_query_arg(array('action' => 'newaction'))) . '">' . __('Add New','automessage') . '</a>';
 		echo "</h2>";
 
 		echo '<br clear="all" />';
@@ -1212,14 +1231,14 @@ class automessage {
 
 	}
 
-	function get_automessage_users_to_process( $time = false ) {
+	function get_automessage_users_to_process( $time = false, $type = 'user' ) {
 
 		if(!$time) {
 			return;
 		}
 
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value <= %s", '_automessage_run_action', (int) $time );
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value <= %s", '_automessage_run_' . $type . '_action', (int) $time );
 
 		$users = $this->db->get_col( $sql );
 
@@ -1227,14 +1246,14 @@ class automessage {
 
 	}
 
-	function get_forced_automessage_users_to_process( $schedule_id = false ) {
+	function get_forced_automessage_users_to_process( $schedule_id = false, $type = 'user' ) {
 
 		if(!$schedule_id) {
 			return;
 		}
 
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_action', (int) $schedule_id );
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_' . $type . '_action', (int) $schedule_id );
 
 		$users = $this->db->get_col( $sql );
 
@@ -1242,13 +1261,13 @@ class automessage {
 
 	}
 
-	function process_automessage() {
-
-		// grab the users
-		$users = $this->get_automessage_users_to_process(time());
+	function process_user_automessage() {
 
 		// Our starting time
 		$timestart = time();
+
+		// grab the users
+		$users = $this->get_automessage_users_to_process( $timestart );
 
 		//Or processing limit
 		$timelimit = 5; // max seconds for processing
@@ -1289,6 +1308,69 @@ class automessage {
 						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
 					} else {
 						$theuser->clear_subscriptions();
+					}
+				}
+
+			}
+		} else {
+			if($this->debug) {
+				// empty list or not processing
+			}
+		}
+
+		if(!empty($this->errors)) {
+			//$this->record_error();
+		}
+
+	}
+
+	function process_blog_automessage() {
+
+		// Our starting time
+		$timestart = time();
+
+		// grab the users
+		$users = $this->get_automessage_users_to_process( $timestart, 'blog' );
+
+		//Or processing limit
+		$timelimit = 5; // max seconds for processing
+
+		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
+		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
+			$lastprocessing = strtotime('-30 minutes');
+			update_automessage_option('automessage_processing', $lastprocessing);
+		}
+
+		if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
+			update_automessage_option('automessage_processing', time());
+
+			foreach( (array) $users as $user_id) {
+
+				if(time() > $timestart + $timelimit) {
+					if($this->debug) {
+						// time out
+						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
+					}
+					break;
+				}
+
+				// Create the user - get the message they are on and then process it
+				$theuser = new Auto_User( $user_id );
+				$action = $this->get_action( (int) $theuser->current_action( 'blog' ) );
+
+				if(!empty($action)) {
+					$theuser->send_message( $action->post_title, $action->post_content );
+					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
+						$next = $this->get_action_after( $action->ID, 'user' );
+					} else {
+						$next = $this->get_action_after( $action->ID, 'blog' );
+					}
+
+					if(!empty($next)) {
+						$days = (int) $next->menu_order - (int) $action->menu_order;
+						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), 'blog' );
+					} else {
+						$theuser->clear_subscriptions( 'blog' );
 					}
 				}
 
