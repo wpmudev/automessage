@@ -1299,8 +1299,6 @@ class automessage {
 					$theuser->send_message( $action->post_title, $action->post_content );
 					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
 						$next = $this->get_action_after( $action->ID, 'user' );
-					} else {
-						$next = $this->get_action_after( $action->ID, 'blog' );
 					}
 
 					if(!empty($next)) {
@@ -1360,9 +1358,7 @@ class automessage {
 
 				if(!empty($action)) {
 					$theuser->send_message( $action->post_title, $action->post_content );
-					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
-						$next = $this->get_action_after( $action->ID, 'user' );
-					} else {
+					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'blog') {
 						$next = $this->get_action_after( $action->ID, 'blog' );
 					}
 
@@ -1391,11 +1387,11 @@ class automessage {
 
 	function force_process($schedule_id) {
 
-		// grab the users
-		$users = $this->get_forced_automessage_users_to_process( $schedule_id );
-
 		// Our starting time
 		$timestart = time();
+
+		// grab the users
+		$users = $this->get_forced_automessage_users_to_process( $timestart );
 
 		//Or processing limit
 		$timelimit = 3; // max seconds for processing
