@@ -28,8 +28,8 @@ class automessage {
 		add_action( 'plugins_loaded', array(&$this, 'load_textdomain'));
 
 		add_action( 'init', array($this, 'initialise_plugin'));
-		add_action('init', array(&$this,'process_user_automessage'));
-		add_action('init', array(&$this,'process_blog_automessage'));
+		add_action(	'init', array(&$this,'process_user_automessage'));
+		add_action(	'init', array(&$this,'process_blog_automessage'));
 
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
 
@@ -420,7 +420,7 @@ class automessage {
 
 		$lastmax = get_automessage_option('automessage_max_ID', false);
 
-		if(empty($lastmax) || $lastmax === false || $lastmax <= 1) {
+		if(empty($lastmax) || $lastmax === false || $lastmax < 1) {
 			// first run - set it to the current maximum
 			$maxID = $this->db->get_var( $this->db->prepare( "SELECT MAX(ID) FROM {$this->db->users}" ) );
 			update_automessage_option('automessage_max_ID', $maxID);
@@ -441,19 +441,19 @@ class automessage {
 
 		$lastmax = get_automessage_option('automessage_max_blog_ID', false);
 
-		if(empty($lastmax) || $lastmax === false || $lastmax <= 1) {
+		if(empty($lastmax) || $lastmax === false || $lastmax < 1) {
 			// first run - set it to the current maximum
 			$maxID = $this->db->get_var( $this->db->prepare( "SELECT MAX(blog_id) FROM {$this->db->blogs}" ) );
 			update_automessage_option('automessage_max_blog_ID', $maxID);
 		} else {
 			// later runs, check the maximum user ID and process if needed.
 			$blogs = $this->db->get_col( $this->db->prepare( "SELECT blog_id FROM {$this->db->blogs} WHERE blog_id > %d", $lastmax) );
-
 			if(!empty($blogs)) {
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
 					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}') );
-
+					//echo $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}');
+					//die($user_id);
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
 					}
