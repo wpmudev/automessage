@@ -281,7 +281,7 @@ class automessage {
 						break;
 			case 'processaction':
 						$id = addslashes($_GET['id']);
-						$this->force_process($id);
+						$this->force_process_user($id);
 						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 14, wp_get_original_referer() )) );
 						break;
 
@@ -1385,7 +1385,7 @@ class automessage {
 
 
 
-	function force_process($schedule_id) {
+	function force_process_user($schedule_id) {
 
 		// Our starting time
 		$timestart = time();
@@ -1427,6 +1427,62 @@ class automessage {
 						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
 					} else {
 						$theuser->clear_subscriptions();
+					}
+				}
+
+			}
+		} else {
+			if($this->debug) {
+				// empty list or not processing
+			}
+		}
+
+		if(!empty($this->errors)) {
+			//$this->record_error();
+		}
+
+	}
+
+	function force_process_blog($schedule_id) {
+
+		// Our starting time
+		$timestart = time();
+
+		// grab the users
+		$users = $this->get_forced_automessage_users_to_process( $timestart, 'blog' );
+
+		//Or processing limit
+		$timelimit = 3; // max seconds for processing
+
+		if(!empty($users)) {
+
+			update_automessage_option('automessage_processing', time());
+
+			foreach( (array) $users as $user_id) {
+
+				if(time() > $timestart + $timelimit) {
+					if($this->debug) {
+						// time out
+						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
+					}
+					break;
+				}
+
+				// Create the user - get the message they are on and then process it
+				$theuser = new Auto_User( $user_id );
+				$action = $this->get_action( (int) $theuser->current_action( 'blog' ) );
+
+				if(!empty($action)) {
+					$theuser->send_message( $action->post_title, $action->post_content );
+					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'blog') {
+						$next = $this->get_action_after( $action->ID, 'blog' );
+					}
+
+					if(!empty($next)) {
+						$days = (int) $next->menu_order - (int) $action->menu_order;
+						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), 'blog' );
+					} else {
+						$theuser->clear_subscriptions( 'blog' );
 					}
 				}
 
