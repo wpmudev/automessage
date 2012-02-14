@@ -279,9 +279,14 @@ class automessage {
 						$this->update_action();
 						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 13, wp_get_original_referer() )) );
 						break;
-			case 'processaction':
+			case 'processuseraction':
 						$id = addslashes($_GET['id']);
 						$this->force_process_user($id);
+						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 14, wp_get_original_referer() )) );
+						break;
+			case 'processblogaction':
+						$id = addslashes($_GET['id']);
+						$this->force_process_blog($id);
 						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 14, wp_get_original_referer() )) );
 						break;
 
@@ -452,8 +457,6 @@ class automessage {
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
 					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}') );
-					//echo $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}');
-					//die($user_id);
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
 					}
@@ -936,7 +939,7 @@ class automessage {
 
 	}
 
-	function show_actions_list($results = false) {
+	function show_actions_list($results = false, $type = 'user') {
 
 		global $page;
 
@@ -1019,7 +1022,7 @@ class automessage {
 				} else {
 					$actions[] = '<a href="?page=' . $page . '&amp;action=unpauseaction&amp;id=' . $result->ID . '" title="' . __('Unpause this message','automessage') . '">' . __('Unpause','automessage') . '</a>';
 				}
-				$actions[] = '<a href="?page=' . $page . '&amp;action=processaction&amp;id=' . $result->ID . '" title="' . __('Process this message','automessage') . '">' . __('Process','automessage') . '</a>';
+				$actions[] = '<a href="?page=' . $page . '&amp;action=process' . $type . 'action&amp;id=' . $result->ID . '" title="' . __('Process this message','automessage') . '">' . __('Process','automessage') . '</a>';
 				$actions[] = '<a href="?page=' . $page . '&amp;action=deleteaction&amp;id=' . $result->ID . '" title="' . __('Delete this message','automessage') . '">' . __('Delete','automessage') . '</a>';
 
 				echo '<div class="row-actions">';
@@ -1167,16 +1170,16 @@ class automessage {
 		echo '<div class="tablenav">';
 		echo '<div class="alignleft">';
 
-		echo '<input type="submit" value="' . __('Delete') . '" name="allaction_delete" class="button-secondary delete" />';
-		echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
-		echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
-		echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Delete','automessage') . '" name="allaction_delete" class="button-secondary delete" />';
+		echo '<input type="submit" value="' . __('Pause','automessage') . '" name="allaction_pause" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Unpause','automessage') . '" name="allaction_unpause" class="button-secondary" />';
+		//echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
 		wp_nonce_field( 'allsiteactions' );
 		echo '<br class="clear" />';
 		echo '</div>';
 		echo '</div>';
 
-		$this->show_actions_list($results);
+		$this->show_actions_list($results ,'blog');
 
 		echo "</form>";
 
@@ -1214,10 +1217,10 @@ class automessage {
 		echo '<div class="tablenav">';
 		echo '<div class="alignleft">';
 
-		echo '<input type="submit" value="' . __('Delete') . '" name="allaction_delete" class="button-secondary delete" />';
-		echo '<input type="submit" value="' . __('Pause') . '" name="allaction_pause" class="button-secondary" />';
-		echo '<input type="submit" value="' . __('Unpause') . '" name="allaction_unpause" class="button-secondary" />';
-		echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Delete','automessage') . '" name="allaction_delete" class="button-secondary delete" />';
+		echo '<input type="submit" value="' . __('Pause','automessage') . '" name="allaction_pause" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Unpause','automessage') . '" name="allaction_unpause" class="button-secondary" />';
+		//echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
 		wp_nonce_field( 'allblogactions' );
 		echo '<br class="clear" />';
 		echo '</div>';
@@ -1391,7 +1394,7 @@ class automessage {
 		$timestart = time();
 
 		// grab the users
-		$users = $this->get_forced_automessage_users_to_process( $timestart );
+		$users = $this->get_forced_automessage_users_to_process( $schedule_id, 'user' );
 
 		//Or processing limit
 		$timelimit = 3; // max seconds for processing
@@ -1412,21 +1415,20 @@ class automessage {
 
 				// Create the user - get the message they are on and then process it
 				$theuser = new Auto_User( $user_id );
-				$action = $this->get_action( (int) $theuser->current_action() );
+				$action = $this->get_action( (int) $theuser->current_action( 'user' ) );
 
 				if(!empty($action)) {
+
 					$theuser->send_message( $action->post_title, $action->post_content );
 					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
 						$next = $this->get_action_after( $action->ID, 'user' );
-					} else {
-						$next = $this->get_action_after( $action->ID, 'blog' );
 					}
 
 					if(!empty($next)) {
 						$days = (int) $next->menu_order - (int) $action->menu_order;
-						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
+						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), 'user' );
 					} else {
-						$theuser->clear_subscriptions();
+						$theuser->clear_subscriptions( 'user' );
 					}
 				}
 
@@ -1449,7 +1451,7 @@ class automessage {
 		$timestart = time();
 
 		// grab the users
-		$users = $this->get_forced_automessage_users_to_process( $timestart, 'blog' );
+		$users = $this->get_forced_automessage_users_to_process( $schedule_id, 'blog' );
 
 		//Or processing limit
 		$timelimit = 3; // max seconds for processing
