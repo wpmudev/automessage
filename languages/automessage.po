@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Automessage 2.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-01-04 02:36+0100\n"
-"PO-Revision-Date: 2011-01-04 02:37+0100\n"
+"POT-Creation-Date: 2012-02-26 23:11+0100\n"
+"PO-Revision-Date: 2012-02-26 23:11+0100\n"
 "Last-Translator: Barry <barry@mapinated.com>\n"
 "Language-Team: Incsub <barry@incsub.com>\n"
 "MIME-Version: 1.0\n"
@@ -13,317 +13,321 @@ msgstr ""
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SearchPath-0: /Users/barrygetty/Work/wordpress/plugins/automessage\n"
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:89
-msgid "Please install the latest version of <a href=\"http://premium.wpmudev.org/project/update-notifications/\" title=\"Download Now &raquo;\">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href=\"http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/\">More information &raquo;</a>"
-msgstr ""
-
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:109
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:110
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:106
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:107
 msgid "Messages"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:137
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1032
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:134
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1077
 msgid "Automessage"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:146
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:143
 msgid "Edit Blog Messages"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:146
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1112
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:143
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1157
 msgid "Blog Level Messages"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:149
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:146
 msgid "Edit User Messages"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:149
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1159
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:146
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1204
 msgid "User Level Messages"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:308
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:310
 msgid "Your action has been added to the schedule."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:311
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:313
 msgid "Your action could not be added."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:314
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:316
 msgid "The scheduled action has been paused"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:317
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:319
 msgid "The scheduled action has been unpaused"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:320
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:322
 msgid "Please select an action to delete"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:323
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:325
 msgid "The scheduled actions have been paused"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:326
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:328
 msgid "Please select an action to pause"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:329
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:331
 msgid "The scheduled actions have been unpaused"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:332
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:334
 msgid "Please select an action to unpause"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:335
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:337
 msgid "The scheduled actions have been processed"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:338
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:340
 msgid "Please select an action to process"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:341
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:343
 msgid "The scheduled action has been deleted"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:344
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:346
 msgid "The scheduled action has been updated"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:347
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:349
 msgid "The scheduled action has been processed"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:719
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:746
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:751
 msgid "Edit Action"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:728
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:821
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:907
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:762
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:865
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:952
 msgid "Action"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:735
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:827
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:950
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:769
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:871
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:995
 msgid "Create new blog"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:741
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:832
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:953
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:775
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:876
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:998
 msgid "Create new user"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:751
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:842
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:785
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:886
 msgid "Message delay"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:760
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:849
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:794
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:893
 msgid "Send immediately"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:762
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:851
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:796
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:895
 msgid "1 day"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:764
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:853
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:798
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:897
 #, php-format
 msgid "%d days"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:774
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:863
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:808
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:907
 msgid "Message Subject"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:775
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:864
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:809
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:908
 msgid "Message subject"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:779
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:868
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:813
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:912
 msgid "Message"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:783
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:872
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:817
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:916
 msgid "You can use the following constants within the message body to embed database information."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:799
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:833
 msgid "Update action"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:811
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:848
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:855
 msgid "Add Action"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:888
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:932
 msgid "Add action"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:911
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:956
 msgid "Time delay"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:915
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:960
 msgid "Subject"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:919
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:964
 msgid "Queued"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:968
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1013
 msgid "[Paused] "
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:974
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1019
 msgid "Edit this message"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:974
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1019
 msgid "Edit"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:976
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1021
 msgid "Pause this message"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:976
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1129
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1176
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1021
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1174
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1221
 msgid "Pause"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:978
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1023
 msgid "Unpause this message"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:978
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1130
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1177
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1023
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1175
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1222
 msgid "Unpause"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:980
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1025
 msgid "Process this message"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:980
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1025
 msgid "Process"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:981
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1026
 msgid "Delete this message"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:981
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1128
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1175
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1026
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1173
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1220
 msgid "Delete"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:992
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1037
 msgid "Immediate"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:994
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1039
 #, php-format
 msgid "%d %s"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:996
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1041
 #, php-format
 msgid "%d %ss"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1014
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1059
 msgid "No actions set for this level."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1036
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1081
 msgid "You are running Automessage version "
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1040
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1085
 msgid "Debug mode is "
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1042
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1087
 msgid "Enabled"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1044
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1089
 msgid "Disabled"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1059
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1104
 msgid "Automessage dashboard"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1131
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1178
-msgid "Process now"
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1158
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1205
+msgid "Add New"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1247
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1307
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1292
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1353
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1411
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.automessage.php:1468
 #, php-format
 msgid "Notice: Processing stopped due to %d second timeout."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.user.php:70
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.user.php:91
 msgid "To stop receiving messages from %sitename% click on the following link: %siteurl%/unsubscribe/"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:198
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:8
+msgid "Please install the latest version of <a href=\"http://premium.wpmudev.org/project/update-notifications/\" title=\"Download Now &raquo;\">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href=\"http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/\">More information &raquo;</a>"
+msgstr ""
+
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:208
 msgid "Data migration"
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:203
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:213
 msgid "You have a previous install of Automessage on this server to migrate from."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:204
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:214
 msgid "Click on the button below to start a migration. This may take some time."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:210
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:220
 msgid "Migrating data."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:211
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:221
 msgid "Please wait whilst we migrate your data."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:212
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:222
 msgid "Moving blog level messages..."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:214
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:224
 msgid "Moving user level messages..."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:216
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:226
 msgid "Migration complete."
 msgstr ""
 
-#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:234
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:244
 msgid "You have not got a previous install of Automessage on this server to migrate from."
 msgstr ""
 
