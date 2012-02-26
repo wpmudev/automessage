@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Automessage 2.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-26 23:11+0100\n"
-"PO-Revision-Date: 2012-02-26 23:11+0100\n"
+"POT-Creation-Date: 2012-02-26 23:35+0100\n"
+"PO-Revision-Date: 2012-02-26 23:35+0100\n"
 "Last-Translator: Barry <barry@mapinated.com>\n"
 "Language-Team: Incsub <barry@incsub.com>\n"
 "MIME-Version: 1.0\n"
@@ -289,6 +289,18 @@ msgstr ""
 
 #: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.user.php:91
 msgid "To stop receiving messages from %sitename% click on the following link: %siteurl%/unsubscribe/"
+msgstr ""
+
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.user.php:142
+msgid "Unsubscribe request processed"
+msgstr ""
+
+#: /Users/barrygetty/Work/wordpress/plugins/automessage/classes/class.user.php:142
+msgid ""
+"Your unsubscribe request has been processed and you have been removed from our mailing list.\n"
+"\n"
+"Thank you\n"
+"\n"
 msgstr ""
 
 #: /Users/barrygetty/Work/wordpress/plugins/automessage/includes/functions.php:8
