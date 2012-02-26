@@ -139,7 +139,7 @@ if(!class_exists('Auto_User')) {
 			$replacements = apply_filters('automessage_replacements', $replacements);
 
 			$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . str_replace('http://', '', $replacements['/%siteurl%/']) . '>';
-			$res = @wp_mail( $this->user_email, "Unsubscribe request processed", "Your unsubscribe request has been processed and you have been removed from our mailing list.\n\nThank you\n\nThe BuddyPress Team.", $header );
+			$res = @wp_mail( $this->user_email, "Unsubscribe request processed", "Your unsubscribe request has been processed and you have been removed from our mailing list.\n\nThank you\n\n", $header );
 			return $res;
 		}
 
