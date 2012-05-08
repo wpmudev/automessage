@@ -407,7 +407,11 @@ class automessage {
 
 			if(!empty($action) && $onaction === false ) {
 				if($action->menu_order == 0) {
-					// Immediate response
+					// Immediate response - we no longer want to send immediately, rather wait for 15 minutes in case the user also creates a blog
+					$theuser->schedule_message( $action->ID, strtotime('+15 minutes'), 'user' );
+
+					// Commented out for now as moved to a 15 minute wait for first message
+					/*
 					$theuser->send_message( $action->post_title, $action->post_content );
 
 					// The get the next one
@@ -417,6 +421,7 @@ class automessage {
 					} else {
 						$theuser->clear_subscriptions( 'user' );
 					}
+					*/
 				} else {
 					// Schedule response
 					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), 'user' );
@@ -1313,7 +1318,7 @@ class automessage {
 						$days = (int) $next->menu_order - (int) $action->menu_order;
 						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
 					} else {
-						$theuser->clear_subscriptions();
+						$theuser->clear_subscriptions( 'user' );
 					}
 				}
 
