@@ -367,6 +367,11 @@ class automessage {
 
 			if(!empty($action) && $onaction === false ) {
 
+				// Remove any user level messages first as we only want blog level messages to be sent
+				if( defined('AUTOMESSAGE_SINGLE_PATH') && AUTOMESSAGE_SINGLE_PATH == true ) {
+					$theuser->clear_subscriptions( 'user' );
+				}
+
 				if($action->menu_order == 0) {
 					// Immediate response
 					$theuser->send_message( $action->post_title, $action->post_content );
