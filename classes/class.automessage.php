@@ -92,7 +92,7 @@ class automessage {
 	function initialise_plugin() {
 
 		$role = get_role( 'administrator' );
-		if( !$role->has_cap( 'read_automessage' ) ) {
+		if( method_exists($role, 'has_cap') && !$role->has_cap( 'read_automessage' ) ) {
 			// Administrator
 			$role->add_cap( 'read_automessage' );
 			$role->add_cap( 'edit_automessage' );
