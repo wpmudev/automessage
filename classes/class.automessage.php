@@ -139,7 +139,7 @@ class automessage {
 		}
 
 		// Add the sub menu
-		if(function_exists('is_site_admin') && is_site_admin()) {
+		if(function_exists('is_super_admin') && is_super_admin()) {
 			add_submenu_page('automessage', __('Edit Blog Messages','automessage'), __('Blog Level Messages','automessage'), 'edit_automessage', "automessage_blogadmin", array(&$this,'handle_blogmessageadmin_panel'));
 		}
 
@@ -437,7 +437,7 @@ class automessage {
 
 		if(empty($lastmax) || $lastmax === false || $lastmax < 1) {
 			// first run - set it to the current maximum
-			$maxID = $this->db->get_var( $this->db->prepare( "SELECT MAX(ID) FROM {$this->db->users}" ) );
+			$maxID = $this->db->get_var( "SELECT MAX(ID) FROM {$this->db->users}" );
 			update_automessage_option('automessage_max_ID', $maxID);
 		} else {
 			// later runs, check the maximum user ID and process if needed.
@@ -458,7 +458,7 @@ class automessage {
 
 		if(empty($lastmax) || $lastmax === false || $lastmax < 1) {
 			// first run - set it to the current maximum
-			$maxID = $this->db->get_var( $this->db->prepare( "SELECT MAX(blog_id) FROM {$this->db->blogs}" ) );
+			$maxID = $this->db->get_var( "SELECT MAX(blog_id) FROM {$this->db->blogs}" );
 			update_automessage_option('automessage_max_blog_ID', $maxID);
 		} else {
 			// later runs, check the maximum user ID and process if needed.
@@ -1324,7 +1324,7 @@ class automessage {
 
 			}
 		} else {
-			if($this->debug) {
+			if(isset($this->debug) && $this->debug) {
 				// empty list or not processing
 			}
 		}
@@ -1385,7 +1385,7 @@ class automessage {
 
 			}
 		} else {
-			if($this->debug) {
+			if(isset($this->debug) && $this->debug) {
 				// empty list or not processing
 			}
 		}
