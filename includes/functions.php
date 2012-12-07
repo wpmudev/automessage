@@ -204,7 +204,7 @@ function AM_moveusermessages() {
 
 function AM_transfer() {
 	?>
-	<div class="postbox " id="dashboard_right_now">
+	<div class="postbox ">
 		<h3 class="hndle"><span><?php _e('Data migration','automessage'); ?></span></h3>
 		<div class="inside">
 			<?php

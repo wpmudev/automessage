@@ -1083,7 +1083,7 @@ class automessage {
 		$debug = get_automessage_option('automessage_debug', false);
 
 		?>
-		<div class="postbox " id="dashboard_right_now">
+		<div class="postbox ">
 			<h3 class="hndle"><span><?php _e('Automessage','automessage'); ?></span></h3>
 			<div class="inside">
 				<?php
