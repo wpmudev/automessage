@@ -1,3 +1,5 @@
+/* @override http://dev.site/wp-content/plugins/automessage/css/automessage.css?ver=5 */
+
 div#entryholder {
 	margin-top: 10px;
 	margin-bottom: 10px;
@@ -70,7 +72,6 @@ div.inside table tbody tr td span {
 div.postbox h3.hndle {
 	margin: 0;
 	line-height: 1em;
-	font-size: 12px;
 	padding: 7px 9px;
 	cursor: auto;
 }

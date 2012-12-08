@@ -615,11 +615,15 @@ class automessage {
 
 	}
 
-	function get_action($id) {
+	function get_action($id = false) {
+
+		if(!$id) {
+			return false;
+		}
 
 		$result = &get_post($id);
 
-		if($result) {
+		if( !empty($result) ) {
 			return $result;
 		} else {
 			return false;
@@ -840,7 +844,7 @@ class automessage {
 		echo '</table>';
 
 		echo '<p class="submit">';
-		echo '<input class="button" type="submit" name="go" value="' . __('Update action', 'automessage') . '" /></p>';
+		echo '<input class="button-primary" type="submit" name="go" value="' . __('Update action', 'automessage') . '" /></p>';
 		echo '</form>';
 
 		echo "</div>";
@@ -939,7 +943,7 @@ class automessage {
 		echo '</table>';
 
 		echo '<p class="submit">';
-		echo '<input class="button" type="submit" name="go" value="' . __('Add action', 'automessage') . '" /></p>';
+		echo '<input class="button-primary" type="submit" name="go" value="' . __('Add action', 'automessage') . '" /></p>';
 		echo '</form>';
 
 		echo "</div>";
@@ -1014,11 +1018,11 @@ class automessage {
 					$title = '&nbsp;';
 				}
 				echo '<tr>';
-				echo '<th scope="row" class="check-column">';
+				echo '<th scope="row" class="check-column" >';
 				echo '<input type="checkbox" id="schedule_' . $result->ID . '" name="allschedules[]" value="' . $result->ID .'" />';
 				echo '</th>';
 
-				echo '<th scope="row">';
+				echo '<td scope="row">';
 				if($result->post_status == 'draft') {
 					echo __('[Paused] ','automessage');
 				}
@@ -1039,9 +1043,9 @@ class automessage {
 				echo implode(' | ', $actions);
 				echo '</div>';
 
-				echo '</th>';
+				echo '</td>';
 
-				echo '<th scope="row" valign="top">';
+				echo '<td scope="row" valign="top">';
 
 				if($result->menu_order == 0) {
 					echo __('Immediate','automessage');
@@ -1051,21 +1055,21 @@ class automessage {
 					echo sprintf(__('%d %ss','automessage'), $result->menu_order, 'day');
 				}
 
-				echo '</th>';
+				echo '</td>';
 
-				echo '<th scope="row" valign="top">';
+				echo '<td scope="row" valign="top">';
 				echo stripslashes($result->post_title);
-				echo '</th>';
+				echo '</td>';
 
-				echo '<th scope="row" valign="top">';
+				echo '<td scope="row" valign="top">';
 				echo intval($this->get_queued_for_message( $result->ID) );
-				echo '</th>';
+				echo '</td>';
 
 				echo '</tr>' . "\n";
 
 			}
 		} else {
-			echo '<tr style="background-color: ' . $bgcolor . '">';
+			echo '<tr>';
 			echo '<td colspan="5">' . __('No actions set for this level.') . '</td>';
 			echo '</tr>';
 		}
@@ -1157,7 +1161,11 @@ class automessage {
 		wp_reset_vars( array('action', 'page') );
 
 		if(!empty($action) && ($action == 'editaction' || $action == 'newaction') ) {
-			$id = addslashes($_GET['id']);
+			if(isset($_GET['id'])) {
+				$id = addslashes($_GET['id']);
+			} else {
+				$id = false;
+			}
 			$this->edit_action_form($id, 'blog');
 			return;
 		}
@@ -1180,8 +1188,8 @@ class automessage {
 		echo '<div class="tablenav">';
 		echo '<div class="alignleft">';
 
-		echo '<input type="submit" value="' . __('Delete','automessage') . '" name="allaction_delete" class="button-secondary delete" />';
-		echo '<input type="submit" value="' . __('Pause','automessage') . '" name="allaction_pause" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Delete','automessage') . '" name="allaction_delete" class="button-secondary delete" style="margin-right: 10px;" />';
+		echo '<input type="submit" value="' . __('Pause','automessage') . '" name="allaction_pause" class="button-secondary" style="margin-right: 10px;" />';
 		echo '<input type="submit" value="' . __('Unpause','automessage') . '" name="allaction_unpause" class="button-secondary" />';
 		//echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
 		wp_nonce_field( 'allsiteactions' );
@@ -1204,7 +1212,12 @@ class automessage {
 		wp_reset_vars( array('action', 'page') );
 
 		if(!empty($action) && ($action == 'editaction' || $action == 'newaction') ) {
-			$id = addslashes($_GET['id']);
+			if(isset($_GET['id'])) {
+				$id = addslashes($_GET['id']);
+			} else {
+				$id = false;
+			}
+
 			$this->edit_action_form($id, 'user');
 			return;
 		}
@@ -1227,8 +1240,8 @@ class automessage {
 		echo '<div class="tablenav">';
 		echo '<div class="alignleft">';
 
-		echo '<input type="submit" value="' . __('Delete','automessage') . '" name="allaction_delete" class="button-secondary delete" />';
-		echo '<input type="submit" value="' . __('Pause','automessage') . '" name="allaction_pause" class="button-secondary" />';
+		echo '<input type="submit" value="' . __('Delete','automessage') . '" name="allaction_delete" class="button-secondary delete" style="margin-right: 10px;" />';
+		echo '<input type="submit" value="' . __('Pause','automessage') . '" name="allaction_pause" class="button-secondary" style="margin-right: 10px;" />';
 		echo '<input type="submit" value="' . __('Unpause','automessage') . '" name="allaction_unpause" class="button-secondary" />';
 		//echo '&nbsp;&nbsp;<input type="submit" value="' . __('Process now') . '" name="allaction_process" class="button-secondary" />';
 		wp_nonce_field( 'allblogactions' );
@@ -1444,7 +1457,7 @@ class automessage {
 
 			}
 		} else {
-			if($this->debug) {
+			if(isset($this->debug) && $this->debug) {
 				// empty list or not processing
 			}
 		}
@@ -1500,7 +1513,7 @@ class automessage {
 
 			}
 		} else {
-			if($this->debug) {
+			if(isset($this->debug) && $this->debug) {
 				// empty list or not processing
 			}
 		}
