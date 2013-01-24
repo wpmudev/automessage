@@ -8,7 +8,7 @@ if( !defined('AUTOMESSAGE_POLL_BLOGS') ) define('AUTOMESSAGE_POLL_BLOGS', true);
 // The maximum delay in days that a message can be scheduled
 if( !defined('AUTOMESSAGE_POLL_MAX_DELAY') ) define('AUTOMESSAGE_POLL_MAX_DELAY', 31);
 // Enable migration
-if( !defined('AUTOMESSAGE_SHOW_MIGRATE') ) define('AUTOMESSAGE_SHOW_MIGRATE', true);
+if( !defined('AUTOMESSAGE_SHOW_MIGRATE') ) define('AUTOMESSAGE_SHOW_MIGRATE', false);
 // Removes user from the user message queue if they also create a blog.
 if( !defined('AUTOMESSAGE_SINGLE_PATH') ) define('AUTOMESSAGE_SINGLE_PATH', true);
 ?>

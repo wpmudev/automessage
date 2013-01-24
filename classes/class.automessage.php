@@ -408,7 +408,7 @@ class automessage {
 			if(!empty($action) && $onaction === false ) {
 				if($action->menu_order == 0) {
 					// Immediate response - we no longer want to send immediately, rather wait for 15 minutes in case the user also creates a blog
-					$theuser->schedule_message( $action->ID, strtotime('+15 minutes'), 'user' );
+					$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), 'user' );
 
 					// Commented out for now as moved to a 15 minute wait for first message
 					/*
@@ -466,7 +466,7 @@ class automessage {
 			if(!empty($blogs)) {
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
-					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";s:1:"1";}') );
+					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";b:1;}') );
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
 					}
