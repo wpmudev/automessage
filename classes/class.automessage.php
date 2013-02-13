@@ -71,7 +71,7 @@ class automessage {
 		//ms_user_row_actions
 
 		//$actions = apply_filters( 'manage_sites_action_links', array_filter( $actions ), $blog['blog_id'], $blogname );
-
+		add_filter( 'manage_sites_action_links', array( &$this, 'add_blog_to_queue_action' ), 99, 3 );
 	}
 
 	function __destruct() {
@@ -156,6 +156,20 @@ class automessage {
 			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'users.php', 'queueuser' ) . '&amp;action=addtoautomessageuserqueue&amp;id=' . $user_object->ID ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
 			//$actions['automessage'] = "<a class='submitautomessage' href='" . wp_nonce_url( $url."action=addtoautomessageuserqueue&amp;user=$user_object->ID", 'bulk-users' ) . "'>" . __( 'Queue', 'automessage' ) . "</a>";
 		}
+
+		return $actions;
+	}
+
+	function add_blog_to_queue_action( $actions, $blog_id, $blog_name ) {
+
+		$url = 'users.php?';
+
+		//$user = new Auto_User($user_object->ID);
+
+		//if(!$user->on_action()) {
+			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'sites.php', 'queueblog' ) . '&amp;action=addtoautomessageblogqueue&amp;id=' . $blog_id ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
+			//$actions['automessage'] = "<a class='submitautomessage' href='" . wp_nonce_url( $url."action=addtoautomessageuserqueue&amp;user=$user_object->ID", 'bulk-users' ) . "'>" . __( 'Queue', 'automessage' ) . "</a>";
+		//}
 
 		return $actions;
 	}
