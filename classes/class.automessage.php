@@ -154,7 +154,6 @@ class automessage {
 
 		if(!$user->on_action()) {
 			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'users.php', 'queueuser' ) . '&amp;action=addtoautomessageuserqueue&amp;id=' . $user_object->ID ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
-			//$actions['automessage'] = "<a class='submitautomessage' href='" . wp_nonce_url( $url."action=addtoautomessageuserqueue&amp;user=$user_object->ID", 'bulk-users' ) . "'>" . __( 'Queue', 'automessage' ) . "</a>";
 		}
 
 		return $actions;
@@ -164,14 +163,30 @@ class automessage {
 
 		$url = 'users.php?';
 
-		//$user = new Auto_User($user_object->ID);
-
-		//if(!$user->on_action()) {
-			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'sites.php', 'queueblog' ) . '&amp;action=addtoautomessageblogqueue&amp;id=' . $blog_id ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
-			//$actions['automessage'] = "<a class='submitautomessage' href='" . wp_nonce_url( $url."action=addtoautomessageuserqueue&amp;user=$user_object->ID", 'bulk-users' ) . "'>" . __( 'Queue', 'automessage' ) . "</a>";
-		//}
+		$user_id = $this->find_user_id_for_blog( $blog_id );
+		if($user_id !== false) {
+			$user = new Auto_User( $user_id );
+			if(!$user->on_action( 'blog' )) {
+				$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'sites.php', 'queueblog' ) . '&amp;action=addtoautomessageblogqueue&amp;id=' . $blog_id ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
+			}
+		}
 
 		return $actions;
+	}
+
+	function find_user_id_for_blog( $blog_id ) {
+
+		//_automessage_on_blog
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_blog', $blog_id );
+
+		$user_id = $this->db->get_var( $sql );
+
+		if(!empty($user_id)) {
+			return $user_id;
+		} else {
+			return false;
+		}
+
 	}
 
 	function setup_menu() {
