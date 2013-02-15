@@ -72,6 +72,9 @@ class automessage {
 
 		//$actions = apply_filters( 'manage_sites_action_links', array_filter( $actions ), $blog['blog_id'], $blogname );
 		add_filter( 'manage_sites_action_links', array( &$this, 'add_blog_to_queue_action' ), 99, 3 );
+
+		add_action( 'load-users.php', array( &$this, 'process_add_user_to_queue_action' ) );
+		add_action( 'load-sites.php', array( &$this, 'process_add_blog_to_queue_action' ) );
 	}
 
 	function __destruct() {
@@ -133,6 +136,40 @@ class automessage {
 
 	}
 
+	function process_add_user_to_queue_action() {
+
+		if( isset($_GET['action']) && $_GET['action'] == 'addtoautomessageuserqueue' ) {
+
+			check_admin_referer( 'queueuser' );
+
+			$user_id = (isset($_GET['user'])) ? (int) $_GET['user'] : false;
+			if(!empty($user_id) && is_numeric($user_id)) {
+				$this->add_user_message( $user_id );
+			}
+
+		}
+
+	}
+
+	function process_add_blog_to_queue_action() {
+
+		if( isset($_GET['action']) && $_GET['action'] == 'addtoautomessageblogqueue' ) {
+
+			check_admin_referer( 'queueblog' );
+
+			$blog_id = (isset($_GET['id'])) ? (int) $_GET['id'] : false;
+			if(!empty($blog_id) && is_numeric($blog_id)) {
+				// Get the user_id of the person we think created the blog
+				$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_id . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";b:1;}') );
+				if(!empty($user_id)) {
+					$this->add_blog_message( $blog_id, $user_id );
+				}
+			}
+
+		}
+
+	}
+
 	function add_user_to_queue_action( $actions, $user_object ) {
 
 		$url = 'users.php?';
@@ -140,7 +177,7 @@ class automessage {
 		$user = new Auto_User($user_object->ID);
 
 		if(!$user->on_action()) {
-			$actions['automessage'] = "<a class='submitautomessage' href='" . wp_nonce_url( $url."action=addtoautomessageuserqueue&amp;user=$user_object->ID", 'bulk-users' ) . "'>" . __( 'Queue', 'automessage' ) . "</a>";
+			$actions['automessage'] = "<a class='submitautomessage' href='" . wp_nonce_url( $url."action=addtoautomessageuserqueue&amp;user=$user_object->ID", 'queueuser' ) . "' title='" . __('Add user to Automessage queue', 'automessage') . "'>" . __( 'Queue', 'automessage' ) . "</a>";
 		}
 
 		return $actions;
@@ -153,7 +190,7 @@ class automessage {
 		$user = new Auto_User($user_object->ID);
 
 		if(!$user->on_action()) {
-			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'users.php', 'queueuser' ) . '&amp;action=addtoautomessageuserqueue&amp;id=' . $user_object->ID ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
+			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'users.php', 'queueuser' ) . '&amp;action=addtoautomessageuserqueue&amp;id=' . $user_object->ID ) ) ) . '" class="submitautomessage" title="' . __('Add user to Automessage queue', 'automessage') . '">' . __( 'Queue', 'automessage' ) . '</a>';
 		}
 
 		return $actions;
@@ -167,7 +204,7 @@ class automessage {
 		if($user_id !== false) {
 			$user = new Auto_User( $user_id );
 			if(!$user->on_action( 'blog' )) {
-				$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'sites.php', 'queueblog' ) . '&amp;action=addtoautomessageblogqueue&amp;id=' . $blog_id ) ) ) . '" class="submitautomessage">' . __( 'Queue', 'automessage' ) . '</a>';
+				$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'sites.php', 'queueblog' ) . '&amp;action=addtoautomessageblogqueue&amp;id=' . $blog_id ) ) ) . '" class="submitautomessage" title="' . __('Add blog to Automessage queue', 'automessage') . '">' . __( 'Queue', 'automessage' ) . '</a>';
 			}
 		}
 
