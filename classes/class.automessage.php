@@ -75,6 +75,11 @@ class automessage {
 
 		add_action( 'load-users.php', array( &$this, 'process_add_user_to_queue_action' ) );
 		add_action( 'load-sites.php', array( &$this, 'process_add_blog_to_queue_action' ) );
+
+		// notices
+		add_action( 'admin_notices', array( &$this, 'output_admin_notices' ) );
+		add_action( 'network_admin_notices', array( &$this, 'output_admin_notices' ) );
+
 	}
 
 	function __destruct() {
@@ -87,11 +92,7 @@ class automessage {
 
 	function load_textdomain() {
 
-		$locale = apply_filters( 'automessage_locale', get_locale() );
-		$mofile = automessage_dir( "languages/automessage-$locale.mo" );
-
-		if ( file_exists( $mofile ) )
-			load_textdomain( 'automessage', $mofile );
+		load_plugin_textdomain( 'automessage', false, '/automessage/languages/');
 
 	}
 
@@ -145,6 +146,10 @@ class automessage {
 			$user_id = (isset($_GET['user'])) ? (int) $_GET['user'] : false;
 			if(!empty($user_id) && is_numeric($user_id)) {
 				$this->add_user_message( $user_id );
+
+				wp_safe_redirect( add_query_arg( 'automessagemsg', 1, wp_get_referer() ) );
+			} else {
+				wp_safe_redirect( add_query_arg( 'automessagemsg', 2, wp_get_referer() ) );
 			}
 
 		}
@@ -159,13 +164,40 @@ class automessage {
 
 			$blog_id = (isset($_GET['id'])) ? (int) $_GET['id'] : false;
 			if(!empty($blog_id) && is_numeric($blog_id)) {
+
 				// Get the user_id of the person we think created the blog
-				$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_id . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";b:1;}') );
+				$user_id = $this->find_user_id_for_blog( $blog_id );
+
 				if(!empty($user_id)) {
 					$this->add_blog_message( $blog_id, $user_id );
+
+					wp_safe_redirect( add_query_arg( 'automessagemsg', 3, wp_get_referer() ) );
+				} else {
+					wp_safe_redirect( add_query_arg( 'automessagemsg', 4, wp_get_referer() ) );
 				}
 			}
 
+		}
+
+	}
+
+	function output_admin_notices() {
+
+		if(isset( $_GET['automessagemsg'] )) {
+			switch( $_GET['automessagemsg'] ) {
+
+				case 1:		echo '<div id="message" class="updated fade"><p>' . __('User added to Automessage queue.', 'automessage') . '</p></div>';
+							break;
+
+				case 2:		echo '<div id="message" class="error"><p>' . __('User could not be added to Automessage queue.', 'automessage') . '</p></div>';
+							break;
+
+				case 3:		echo '<div id="message" class="updated fade"><p>' . __('Blog admin added to Automessage queue.', 'automessage') . '</p></div>';
+							break;
+
+				case 4:		echo '<div id="message" class="error"><p>' . __('Blog admin could not be added to Automessage queue.', 'automessage') . '</p></div>';
+							break;
+			}
 		}
 
 	}
@@ -190,7 +222,7 @@ class automessage {
 		$user = new Auto_User($user_object->ID);
 
 		if(!$user->on_action()) {
-			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'users.php', 'queueuser' ) . '&amp;action=addtoautomessageuserqueue&amp;id=' . $user_object->ID ) ) ) . '" class="submitautomessage" title="' . __('Add user to Automessage queue', 'automessage') . '">' . __( 'Queue', 'automessage' ) . '</a>';
+			$actions['automessage'] = '<a href="' . $delete = esc_url( network_admin_url( add_query_arg( '_wp_http_referer', urlencode( stripslashes( $_SERVER['REQUEST_URI'] ) ), wp_nonce_url( 'users.php', 'queueuser' ) . '&amp;action=addtoautomessageuserqueue&amp;user=' . $user_object->ID ) ) ) . '" class="submitautomessage" title="' . __('Add user to Automessage queue', 'automessage') . '">' . __( 'Queue', 'automessage' ) . '</a>';
 		}
 
 		return $actions;
@@ -201,6 +233,7 @@ class automessage {
 		$url = 'users.php?';
 
 		$user_id = $this->find_user_id_for_blog( $blog_id );
+
 		if($user_id !== false) {
 			$user = new Auto_User( $user_id );
 			if(!$user->on_action( 'blog' )) {
@@ -214,9 +247,9 @@ class automessage {
 	function find_user_id_for_blog( $blog_id ) {
 
 		//_automessage_on_blog
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_blog', $blog_id );
+		$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_id . "_capabilities' AND (meta_value = %s OR meta_value = %s) ORDER BY user_id ASC", 'a:1:{s:13:"administrator";b:1;}', 'a:1:{s:13:"administrator";s:1:"1";}') );
 
-		$user_id = $this->db->get_var( $sql );
+		//echo $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_id . "_capabilities' AND (meta_value = %s OR meta_value = %s) ORDER BY user_id ASC ", 'a:1:{s:13:"administrator";b:1;}', 'a:1:{s:13:"administrator";s:1:"1";}');
 
 		if(!empty($user_id)) {
 			return $user_id;
@@ -565,7 +598,8 @@ class automessage {
 			if(!empty($blogs)) {
 				foreach($blogs as $blog_ID) {
 					// Get the user_id of the person we think created the blog
-					$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";b:1;}') );
+					$user_id = $this->find_user_id_for_blog( $blog_ID );
+					//$user_id = $this->db->get_var( $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = '" . $this->db->base_prefix . $blog_ID . "_capabilities' AND meta_value = %s", 'a:1:{s:13:"administrator";b:1;}') );
 					if(!empty($user_id)) {
 						$this->add_blog_message( $blog_ID, $user_id );
 					}
@@ -1667,11 +1701,20 @@ class automessage {
 				$user_id = $this->db->get_var( $sql );
 
 				if(!empty($user_id)) {
+
 					$theuser = new Auto_User( $user_id );
-					$theuser->clear_subscriptions( 'user' );
-					$theuser->clear_subscriptions( 'blog' );
-					$theuser->send_unsubscribe();
+
+					if( $theuser->on_action('user') || $theuser->on_action('blog') ) {
+						$theuser->clear_subscriptions( 'user' );
+						$theuser->clear_subscriptions( 'blog' );
+
+						$theuser->send_unsubscribe();
+					}
+
 				}
+
+				wp_safe_redirect( get_option('home') );
+				exit;
 
 			}
 
