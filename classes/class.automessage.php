@@ -1663,7 +1663,7 @@ class automessage {
 
 		global $wp_rewrite;
 
-		//$wp_rewrite->flush_rules();
+		$wp_rewrite->flush_rules();
 
 	}
 
@@ -1711,11 +1711,8 @@ class automessage {
 						$theuser->send_unsubscribe();
 					}
 
+					add_action('template_redirect', array(&$this, 'output_unsubscribe_message') );
 				}
-
-				wp_safe_redirect( get_option('home') );
-				exit;
-
 			}
 
 		}
@@ -1724,76 +1721,53 @@ class automessage {
 	function output_unsubscribe_message() {
 		global $wp_query;
 
-		if (file_exists(TEMPLATEPATH . '/' . 'page.php')) {
+		/**
+		 * What we are going to do here, is create a fake post.  A post
+		 * that doesn't actually exist. We're gonna fill it up with
+		 * whatever values you want.  The content of the post will be
+		 * the output from your plugin.  The questions and answers.
+		 */
+		/**
+		 * Clear out any posts already stored in the $wp_query->posts array.
+		 */
+		$wp_query->posts = array();
+		$wp_query->post_count = 0;
 
-			/**
-			 * What we are going to do here, is create a fake post.  A post
-			 * that doesn't actually exist. We're gonna fill it up with
-			 * whatever values you want.  The content of the post will be
-			 * the output from your plugin.  The questions and answers.
-			 */
-			/**
-			 * Clear out any posts already stored in the $wp_query->posts array.
-			 */
-			$wp_query->posts = array();
-			$wp_query->post_count = 0;
+		/**
+		 * Create a fake post.
+		 */
+		$post = new stdClass;
+		$post->post_author = 1;
+		$post->post_name = 'unsubscribe';
 
-			/**
-			 * Create a fake post.
-			 */
-			$post = new stdClass;
-			$post->post_author = 1;
-			$post->post_name = 'unsubscribe';
+		add_filter('the_permalink',create_function('$permalink', 'return "' . get_option('home') . '";'));
+		$post->guid = get_bloginfo('wpurl') . '/' . 'unsubscribe';
+		$post->post_title = __('Unsubscription request','automessage');
+		$post->post_content = '<p>'.__('Your unsubscription request has been processed successfully.','automessage').'</p>';
+		$post->post_excerpt = __('Your unsubscription request has been processed successfully.','automessage');
+		$post->ID = -1;
+		$post->post_status = 'publish';
+		$post->post_type = 'page';
+		$post->comment_status = 'closed';
+		$post->ping_status = 'closed';
+		$post->comment_count = 0;
+		$post->post_date = current_time('mysql');
+		$post->post_date_gmt = current_time('mysql', 1);
 
-			add_filter('the_permalink',create_function('$permalink', 'return "' . get_option('home') . '";'));
-			$post->guid = get_bloginfo('wpurl') . '/' . 'unsubscribe';
-			$post->post_title = 'Unsubscription request';
-			$post->post_content = '<p>Your unsubscription request has been processed successfully.</p>';
-			$post->post_excerpt = 'Your unsubscription request has been processed successfully.';
-			$post->ID = -1;
-			$post->post_status = 'publish';
-			$post->post_type = 'page';
-			$post->comment_status = 'closed';
-			$post->ping_status = 'closed';
-			$post->comment_count = 0;
-			$post->post_date = current_time('mysql');
-			$post->post_date_gmt = current_time('mysql', 1);
+		$wp_query->posts[] = $post;
+		$wp_query->post_count = 1;
+		$wp_query->is_home = false;
 
-			$wp_query->posts[] = $post;
-			$wp_query->post_count = 1;
-			$wp_query->is_home = false;
+		//decide what template file to load
+		if(file_exists(TEMPLATEPATH . '/' . 'page.php'))
+			$template = TEMPLATEPATH . '/' . 'page.php';
+		elseif(file_exists(TEMPLATEPATH . '/' . 'single.php'))
+			$template = TEMPLATEPATH . '/' . 'single.php';
+		else
+			$template = TEMPLATEPATH . '/' . 'index.php';
 
-			ob_start();
-
-			load_template(TEMPLATEPATH . '/' . 'page.php');
-
-			ob_end_flush();
-
-			/**
-			 * YOU MUST DIE AT THE END.  BAD THINGS HAPPEN IF YOU DONT
-			 */
-			die();
-
-		}
-
-		return $post;
+		load_template($template);
 	}
-
-	function use_template($template) {
-
-			$trequestedtemplate = 'page.php';
-
-			if ( file_exists(STYLESHEETPATH . '/' . $trequestedtemplate)) {
-				$template = STYLESHEETPATH . '/' . $requestedtemplate;
-			} else if ( file_exists(TEMPLATEPATH . '/' . $requestedtemplate) ) {
-				$template = TEMPLATEPATH . '/' . $requestedtemplate;
-			}
-
-
-		return $template;
-
-	}
-
 }
 
 ?>
