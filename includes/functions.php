@@ -1,5 +1,19 @@
 <?php
 
+function is_automessage_active_for_network() {
+    if ( !is_multisite() )
+        return false;
+
+    global $automessage_basename;
+
+    $plugin = $automessage_basename;
+    $plugins = get_site_option( 'active_sitewide_plugins');
+    if ( isset($plugins[$plugin]) )
+        return true;
+
+    return false;
+}
+
 function set_automessage_url($base) {
 
 	global $automessage_url;

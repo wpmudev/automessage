@@ -280,8 +280,7 @@ class automessage {
 	}
 
 	function install($install = false) {
-
-		if($install == false) {
+		if($install == false && ( !is_automessage_active_for_network() || (is_automessage_active_for_network() && get_current_blog_id() == 1) ) ) {
 			$this->flush_rewrite();
 		}
 
