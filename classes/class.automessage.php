@@ -280,8 +280,8 @@ class automessage {
 	}
 
 	function install($install = false) {
-		if($install == false && ( !is_automessage_active_for_network() || (is_automessage_active_for_network() && get_current_blog_id() == 1) ) ) {
-			$this->flush_rewrite();
+		if($install == false && ( !is_automessage_active_for_network() || (is_automessage_active_for_network() && get_current_blog_id() == 1) ) && function_exists('flush_rewrite_rules') ) {
+			flush_rewrite_rules();
 		}
 
 		update_automessage_option('automessage_installed', $this->build);
@@ -1653,16 +1653,6 @@ class automessage {
 		if(!empty($this->errors)) {
 			//$this->record_error();
 		}
-
-	}
-
-	// Unsubscribe actions
-	function flush_rewrite() {
-		// This function clears the rewrite rules and forces them to be regenerated
-
-		global $wp_rewrite;
-
-		$wp_rewrite->flush_rules();
 
 	}
 

@@ -3,8 +3,8 @@
 Plugin Name: Automessage
 Plugin URI: http://premium.wpmudev.org/project/automatic-follow-up-emails-for-new-users
 Description: This plugin allows emails to be scheduled and sent to new users.
-Author: Barry (Incsub)
-Version: 2.3.3
+Author: Barry (Incsub), Maniu (incsub)
+Version: 2.3.4
 Author URI: http://caffeinatedb.com
 WDP ID: 81
 */
@@ -38,9 +38,9 @@ require_once('classes/class.user.php');
 set_automessage_url(__FILE__);
 set_automessage_dir(__FILE__);
 
-if(is_admin()) {
-	include_once('external/wpmudev-dash-notification.php');
-}
+global $wpmudev_notices;
+$wpmudev_notices[] = array( 'id'=> 81,'name'=> 'Automessage', 'screens' => array( 'toplevel_page_automessage', 'automessage_page_automessage_blogadmin', 'automessage_page_automessage_useradmin' ) );
+include_once('external/wpmudev-dash-notification.php');
 
 // Instantiate the class
 $automsg = new automessage();
