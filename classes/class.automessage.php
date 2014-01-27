@@ -1158,7 +1158,7 @@ class automessage {
 				if($result->post_status == 'draft') {
 					echo __('[Paused] ','automessage');
 				}
-				echo $title;
+				echo apply_filters( 'automessage_row_action_title', $title, $hook );
 
 				$actions = array();
 
