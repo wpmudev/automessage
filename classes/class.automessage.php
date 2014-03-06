@@ -271,7 +271,8 @@ class automessage {
 		}
 
 		// Add the sub menu
-		if(function_exists('is_super_admin') && is_super_admin()) {
+		$blog_id = get_current_blog_id();
+		if(is_multisite() && function_exists('is_super_admin') && is_super_admin() && $blog_id == 1) {
 			add_submenu_page('automessage', __('Edit Blog Messages','automessage'), __('Blog Level Messages','automessage'), 'edit_automessage', "automessage_blogadmin", array(&$this,'handle_blogmessageadmin_panel'));
 		}
 
@@ -526,39 +527,56 @@ class automessage {
 
 	function add_user_message($user_id) {
 		// This function will add a scheduled item to the user actions
-		global $blog_id;
 
 		if(!empty($user_id)) {
+			$user_blogs_ready = array();
 
-			$action = $this->get_first_action( 'user' );
+			if(is_multisite()) {
+				$user_blogs = get_blogs_of_user($user_id);
 
-			$theuser = new Auto_User( $user_id );
-			$theuser->set_blog_id( $blog_id );
-			$onaction = $theuser->on_action( 'user' );
-
-			if(!empty($action) && $onaction === false ) {
-				if($action->menu_order == 0) {
-					// Immediate response - we no longer want to send immediately, rather wait for 15 minutes in case the user also creates a blog
-					$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), 'user' );
-
-					// Commented out for now as moved to a 15 minute wait for first message
-					/*
-					$theuser->send_message( $action->post_title, $action->post_content );
-
-					// The get the next one
-					$next = $this->get_action_after( $action->ID, 'user' );
-					if(!empty($next)) {
-						$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days'), 'user' );
-					} else {
-						$theuser->clear_subscriptions( 'user' );
-					}
-					*/
-				} else {
-					// Schedule response
-					$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), 'user' );
-				}
+				if(!empty($user_blogs))
+					foreach ($user_blogs as $user_blog)
+						$user_blogs_ready[] = $user_blog->userblog_id;
 			}
 
+			if(!in_array("1", $user_blogs_ready))
+				$user_blogs_ready[] = 1;
+
+			foreach ($user_blogs_ready as $user_blog_id) {
+				if(is_multisite())
+					switch_to_blog($user_blog_id);
+
+				$action = $this->get_first_action( 'user' );
+
+				$theuser = new Auto_User( $user_id );
+				$theuser->set_blog_id( $user_blog_id );
+				$onaction = $theuser->on_action( 'user' );
+
+				if(!empty($action) && $onaction === false ) {
+					if($action->menu_order == 0) {
+						// Immediate response - we no longer want to send immediately, rather wait for 15 minutes in case the user also creates a blog
+						$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), 'user' );
+
+						// Commented out for now as moved to a 15 minute wait for first message
+						/*
+						$theuser->send_message( $action->post_title, $action->post_content );
+
+						// The get the next one
+						$next = $this->get_action_after( $action->ID, 'user' );
+						if(!empty($next)) {
+							$theuser->schedule_message( $next->ID, strtotime('+' . $next->menu_order . ' days'), 'user' );
+						} else {
+							$theuser->clear_subscriptions( 'user' );
+						}
+						*/
+					} else {
+						// Schedule response
+						$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), 'user' );
+					}
+				}
+			}
+			if(is_multisite())
+				restore_current_blog();
 		}
 	}
 
@@ -609,12 +627,13 @@ class automessage {
 
 	}
 
-	function get_queued_for_message($id) {
+	function get_queued_for_message($id, $type = 0) {
+		$blog_id = get_current_blog_id();
+		$blog_id = ($type && $blog_id != 1) ? '_'.$blog_id : '';
 
-		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key LIKE %s AND meta_value = %s", '_automessage_on_%_action', $id );
+		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key LIKE %s AND meta_value = %s", '_automessage_on_%_action'.$blog_id, $id );
 
 		return $this->db->get_var( $sql );
-
 	}
 
 
@@ -1194,7 +1213,8 @@ class automessage {
 				echo '</td>';
 
 				echo '<td scope="row" valign="top">';
-				echo intval($this->get_queued_for_message( $result->ID) );
+				$type = ($hook == 'wpmu_new_user') ? 'user' : 0;
+				echo intval($this->get_queued_for_message( $result->ID, $type) );
 				echo '</td>';
 
 				echo '</tr>' . "\n";
@@ -1410,8 +1430,11 @@ class automessage {
 			return;
 		}
 
+		$blog_id = get_current_blog_id();
+		$blog_id = ($type == 'user' && $blog_id != 1) ? '_'.$blog_id : '';
+
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_' . $type . '_action', (int) $schedule_id );
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_' . $type . '_action'.$blog_id, (int) $schedule_id );
 
 		$users = $this->db->get_col( $sql );
 
