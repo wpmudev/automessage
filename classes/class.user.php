@@ -145,7 +145,7 @@ if(!class_exists('Auto_User')) {
 
 		function current_action( $type = 'user') {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1) ? '_'.$blog_id : '';
+			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 			$action = get_user_meta( $this->ID, '_automessage_on_' . $type . '_action'.$blog_id, true );
 
@@ -162,7 +162,7 @@ if(!class_exists('Auto_User')) {
 
 		function on_action( $type = 'user', $blog_id = 0) {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1) ? '_'.$blog_id : '';
+			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 			$action = get_user_meta( $this->ID, '_automessage_on_' . $type . '_action'.$blog_id, true );
 
@@ -175,7 +175,7 @@ if(!class_exists('Auto_User')) {
 
 		function schedule_message( $message_id, $timestamp, $type = 'user' ) {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1) ? '_'.$blog_id : '';
+			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 			update_user_meta($this->ID, '_automessage_on_' . $type . '_action'.$blog_id, (int) $message_id);
 			update_user_meta($this->ID, '_automessage_run_' . $type . '_action'.$blog_id, (int) $timestamp);
@@ -184,7 +184,7 @@ if(!class_exists('Auto_User')) {
 
 		function clear_subscriptions( $type = 'user') {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1) ? '_'.$blog_id : '';
+			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 			if($this->current_action( $type )) {
 				delete_user_meta($this->ID, '_automessage_on_' . $type . '_action'.$blog_id);
