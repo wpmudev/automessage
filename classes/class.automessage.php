@@ -2,7 +2,7 @@
 
 class automessage {
 
-	var $build = 5;
+	var $build = 6;
 
 	// Our own link to the database class - using this means we can easily switch db libraries in just this class if required
 	var $db;
@@ -28,10 +28,11 @@ class automessage {
 		add_action( 'plugins_loaded', array(&$this, 'load_textdomain'));
 
 		add_action( 'init', array($this, 'initialise_plugin'));
-		add_action(	'init', array(&$this,'process_user_automessage'));
-		add_action(	'init', array(&$this,'process_blog_automessage'));
+		add_action(	'init', array(&$this,'process_automessage'));
 
 		add_action('admin_menu', array(&$this,'setup_menu'), 100);
+
+		add_action('admin_enqueue_scripts', array($this,'register_scripts_styles_admin'), 11);
 
 		add_action('load-toplevel_page_automessage', array(&$this, 'add_admin_header_automessage_dash'));
 		add_action('load-automessage_page_automessage_blogadmin', array(&$this, 'add_admin_header_automessage_blogadmin'));
@@ -80,6 +81,8 @@ class automessage {
 		add_action( 'admin_notices', array( &$this, 'output_admin_notices' ) );
 		add_action( 'network_admin_notices', array( &$this, 'output_admin_notices' ) );
 
+		//set up hooking up to new plugin
+		add_action( 'plugins_loaded', array( &$this, 'setup_custom_hooks' ) );
 	}
 
 	function __destruct() {
@@ -135,6 +138,18 @@ class automessage {
 
 		do_action('automessage_addlisteners');
 
+	}
+
+	function register_scripts_styles_admin($hook) {
+		if($hook == 'automessage_page_automessage_blogadmin' || $hook == 'automessage_page_automessage_useradmin') {
+			wp_enqueue_style( 'automessageadmincss', automessage_url('css/automessage.css'), array(), $this->build );
+			wp_enqueue_script( 'automessageadminjs', automessage_url('js/automessage.js'), array('jquery'), $this->build );
+
+			$params = array(
+				'replace_additional' => apply_filters('automessage_replacements_description', array())
+			);
+			wp_localize_script( 'automessageadminjs', 'automessage', $params );
+		}
 	}
 
 	function process_add_user_to_queue_action() {
@@ -300,8 +315,6 @@ class automessage {
 		wp_reset_vars( array('action', 'page') );
 
 		$this->add_update_check();
-
-		wp_enqueue_style( 'automessageadmincss', automessage_url('css/automessage.css'), array(), $this->build );
 	}
 
 	function add_admin_header_automessage_dash() {
@@ -388,6 +401,7 @@ class automessage {
 								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 9, wp_get_original_referer() )) );
 							}
 						}
+						/*
 						if(isset($_POST['allaction_process'])) {
 							if(isset($_POST['allschedules'])) {
 								$allsscheds = $_POST['allschedules'];
@@ -399,6 +413,7 @@ class automessage {
 								wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 11, wp_get_original_referer() )) );
 							}
 						}
+						*/
 						$this->handle_messageadmin_panel();
 						break;
 			case 'deleteaction':
@@ -413,12 +428,13 @@ class automessage {
 						break;
 			case 'processuseraction':
 						$id = addslashes($_GET['id']);
-						$this->force_process_user($id);
+						$hook = addslashes($_GET['hook']);
+						$this->force_process($hook, $id);
 						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 14, wp_get_original_referer() )) );
 						break;
 			case 'processblogaction':
 						$id = addslashes($_GET['id']);
-						$this->force_process_blog($id);
+						$this->force_process('blog', $id);
 						wp_safe_redirect( remove_query_arg(array('action', 'id'), add_query_arg( 'msg', 14, wp_get_original_referer() )) );
 						break;
 
@@ -487,6 +503,64 @@ class automessage {
 		}
 	}
 
+	function setup_custom_hooks() {
+		global $automessage_custom_user_hooks;
+
+		$automessage_custom_user_hooks = apply_filters('automessage_custom_user_hooks', array());
+
+		foreach($automessage_custom_user_hooks as $custom_hook_action => $custom_hook_details) {
+			//check if required args are there
+			if(!is_numeric($custom_hook_action) && isset($custom_hook_details['action_nicename'])) {
+				if(isset($custom_hook_details['arg_with_user_id']) && is_numeric($custom_hook_details['arg_with_user_id']))
+					$arg_with_user_id = $custom_hook_details['arg_with_user_id'];
+				else
+					$arg_with_user_id = 0;
+
+				add_action($custom_hook_action, array(&$this,'add_custom_message'), 10, $arg_with_user_id);
+			}
+			else
+				continue;
+		}
+	}
+
+	function add_custom_message() {
+		global $automessage_custom_user_hooks;
+
+		$already_sent = array();
+
+		$hook = current_filter();
+		$custom_hook_details = $automessage_custom_user_hooks[$hook];
+		if(isset($custom_hook_details['arg_with_user_id']) && is_numeric($custom_hook_details['arg_with_user_id'])) {
+			$args = func_get_args();
+			$user_ids = $args[$custom_hook_details['arg_with_user_id']-1];
+			if(!is_array($user_ids))
+				$user_ids = array($user_ids);
+
+			foreach ($user_ids as $user_id) {
+				$user = get_userdata($user_id);
+
+				if($user == false)
+					continue;
+
+				$action = $this->get_first_action( $hook );
+
+				$theuser = new Auto_User( $user_id );
+				$theuser->set_blog_id( get_current_blog_id() );
+				$onaction = $theuser->on_action( $hook );
+
+				if(!empty($action) && $onaction === false ) {
+					if($action->menu_order == 0) {
+						// Immediate response - we no longer want to send immediately, rather wait for 5 minutes in case the user also creates a blog
+						$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), $hook );
+					} else {
+						// Schedule response
+						$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), $hook );
+					}
+				}
+			}
+		}
+	}
+
 	function add_blog_message($blog_id, $user_id) {
 		// This function will add a scheduled item to the blog actions
 		if(is_numeric($user_id)) {
@@ -506,7 +580,9 @@ class automessage {
 
 				if($action->menu_order == 0) {
 					// Immediate response
-					$theuser->send_message( $action->post_title, $action->post_content );
+					$enewsletter = get_post_meta( $action->ID, '_automessage_enewsletter', true );
+					$extra = !empty($enewsletter) ? array('enewsletter' => $enewsletter) : array();
+					$theuser->send_message( $action->post_title, $action->post_content, $extra );
 
 					// The get the next one
 					$next = $this->get_action_after( $action->ID, 'blog' );
@@ -627,11 +703,11 @@ class automessage {
 
 	}
 
-	function get_queued_for_message($id, $type = 0) {
+	function get_queued_for_message($id, $hook = 0) {
 		$blog_id = get_current_blog_id();
-		$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+		$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
-		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_'.$type.'_action'.$blog_id, $id );
+		$sql = $this->db->prepare( "SELECT count(*) FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_'.$hook.'_action'.$blog_id, $id );
 
 		return $this->db->get_var( $sql );
 	}
@@ -701,21 +777,27 @@ class automessage {
 
 	}
 
-	function get_first_action($level) {
+	function get_first_action($hook) {
 
-		if(empty($level)) {
+		if(empty($hook)) {
 			return false;
 		}
+
+		//switch for compatibility with default actions
+		if($hook == 'user')
+			$hook = 'wpmu_new_user';
+		elseif($hook == 'blog')
+			$hook = 'wpmu_new_blog';
 
 		$args = array(
 			'posts_per_page' => 250,
 			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
-			'meta_key' => '_automessage_level',
+			'meta_key' => '_automessage_hook',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',
-			'meta_value' => $level
+			'meta_value' => $hook
 		);
 
 		$get_actions = new WP_Query;
@@ -728,21 +810,26 @@ class automessage {
 		}
 	}
 
-	function get_action_after( $previous_id, $level ) {
+	function get_action_after( $previous_id, $hook ) {
 
-		if(empty($level)) {
+		if(empty($hook)) {
 			return false;
 		}
+
+		if($hook == 'user')
+			$hook = 'wpmu_new_user';
+		elseif($hook == 'blog')
+			$hook = 'wpmu_new_blog';
 
 		$args = array(
 			'posts_per_page' => 250,
 			'offset' => 0,
 			'post_type' => 'automessage',
 			'post_status' => 'private',
-			'meta_key' => '_automessage_level',
+			'meta_key' => '_automessage_hook',
 			'orderby' => 'menu_order',
 			'order' => 'ASC',
-			'meta_value' => $level
+			'meta_value' => $hook
 		);
 
 		$get_actions = new WP_Query;
@@ -772,7 +859,7 @@ class automessage {
 			return false;
 		}
 
-		$result = &get_post($id);
+		$result = get_post($id);
 
 		if( !empty($result) ) {
 			return $result;
@@ -787,6 +874,7 @@ class automessage {
 		$hook = $_POST['hook'];
 		$subject = $_POST['subject'];
 		$message = $_POST['message'];
+		$enewsletter = $_POST['enewsletter'];
 
 		$period = $_POST['period'] . ' ' . $_POST['timeperiod'];
 
@@ -811,6 +899,7 @@ class automessage {
 			update_metadata('post', $message_id, '_automessage_hook', $hook);
 			update_metadata('post', $message_id, '_automessage_level', $type);
 			update_metadata('post', $message_id, '_automessage_period', $period);
+			update_metadata('post', $message_id, '_automessage_enewsletter', $enewsletter);
 		}
 
 		return $message_id;
@@ -832,6 +921,7 @@ class automessage {
 		$hook = $_POST['hook'];
 		$subject = $_POST['subject'];
 		$message = $_POST['message'];
+		$enewsletter = $_POST['enewsletter'];
 
 		$period = $_POST['period'] . ' ' . $_POST['timeperiod'];
 
@@ -856,6 +946,7 @@ class automessage {
 			update_metadata('post', $message_id, '_automessage_hook', $hook);
 			update_metadata('post', $message_id, '_automessage_level', $type);
 			update_metadata('post', $message_id, '_automessage_period', $period);
+			update_metadata('post', $message_id, '_automessage_enewsletter', $enewsletter);
 		}
 
 		return $message_id;
@@ -910,13 +1001,6 @@ class automessage {
 		echo "<div class='wrap'>";
 		echo "<h2>" . __('Edit Action', 'automessage') . "</h2>";
 
-		echo '<div id="poststuff" class="metabox-holder">';
-		?>
-		<div class="postbox">
-			<h3 class="hndle" style='cursor:auto;'><span><?php _e('Edit Action','automessage'); ?></span></h3>
-			<div class="inside">
-		<?php
-
 		echo '<form method="post" action="?page=' . $page . '">';
 		echo '<input type="hidden" name="ID" value="' . $editing->ID . '" />';
 		echo "<input type='hidden' name='type' value='" . $type . "' />";
@@ -927,19 +1011,30 @@ class automessage {
 		echo '<th style="" scope="row" valign="top">' . __('Action','automessage') . '</th>';
 		echo '<td valign="top">';
 
-		echo '<select name="hook" style="width: 40%;">';
+		echo '<select id="automessage-hook-select" name="hook" style="width: 40%;">';
 			switch($type) {
-				case 'blog':	echo '<option value="wpmu_new_blog"';
-								echo '>';
-								echo __('Create new blog','automessage');
-								echo '</option>';
-								break;
+				case 'blog':	
+					echo '<option value="wpmu_new_blog"';
+					echo '>';
+					echo __('Create new blog','automessage');
+					echo '</option>';
+				break;
 
-				case 'user':	echo '<option value="wpmu_new_user"';
-								echo '>';
-								echo __('Create new user','automessage');
-								echo '</option>';
-								break;
+				case 'user':
+					$current_hook = $metadata['_automessage_hook'][0];
+					echo '<option value="wpmu_new_user" '.selected( $current_hook, "wpmu_new_user", false);
+					echo '>';
+					echo __('Create new user','automessage');
+					echo '</option>';
+
+					global $automessage_custom_user_hooks;
+					foreach ($automessage_custom_user_hooks as $hook => $custom_hook_details) {
+						echo '<option value="'.$hook.'" '.selected( $current_hook, $hook, false);
+						echo '>';
+						echo $custom_hook_details['action_nicename'];
+						echo '</option>';
+					}
+				break;
 			}
 		echo '</select>';
 
@@ -987,21 +1082,45 @@ class automessage {
 		echo '%usernicename%<br/>';
 		echo '%sitename%<br/>';
 		echo "%siteurl%<br/>";
-
+		echo '<div id="automessage-instructions-aditional"></div>';
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
+		
+		global $email_newsletter;
+
+		if(isset($email_newsletter) && is_object($email_newsletter)) {
+			$newsletters = $email_newsletter->get_newsletters(array('orderby' => 'newsletter_id'), 0, 0);
+			$current_newsletter = (isset($metadata['_automessage_enewsletter'][0]) && is_numeric($metadata['_automessage_enewsletter'][0])) ? $metadata['_automessage_enewsletter'][0] : 0;
+
+			echo '<tr class="form-field form-required">';
+			echo '<th style="" scope="row" valign="top">' . __('eNewsletter','automessage') . '</th>';
+			echo '<td valign="top">';
+
+			echo '<select name="enewsletter" style="width: 50%; float: left;">';
+			echo '<option value="0" '.selected( $current_newsletter, 0, false).'>'.__('Disabled','automessage').'</option>';
+			foreach ($newsletters as $newsletter) {
+				echo '<option value="'.$newsletter['newsletter_id'].'" '.selected( $current_newsletter, $newsletter['newsletter_id'], false);
+				echo '>';
+				echo $newsletter['newsletter_id'];
+				echo !empty($newsletter['subject']) ? ' - '.$newsletter['subject'] : '';
+				echo '</option>';
+			}
+			echo '</select>';
+
+			echo '<div class="instructions" style="float: left; width: 40%; margin-left: 10px;">';
+			echo sprintf(__('Alternatively, you can choose newsletter to be sent instead of message above. Newsletters can be managed <a href="%s">here</a>','automessage'), admin_url('admin.php?page=newsletters'));
+			echo '</div>';
+
+			echo '</td>';
+			echo '</tr>';
+		}
 
 		echo '</table>';
 
 		echo '<p class="submit">';
 		echo '<input class="button-primary" type="submit" name="go" value="' . __('Update action', 'automessage') . '" /></p>';
 		echo '</form>';
-
-		echo "</div>";
-		echo "</div>";
-
-		echo "</div>";
 	}
 
 	function add_action_form($type) {
@@ -1030,17 +1149,29 @@ class automessage {
 		echo '<th style="" scope="row" valign="top">' . __('Action','automessage') . '</th>';
 		echo '<td>';
 
-		echo '<select name="hook" style="width: 40%;">';
+		echo '<select id="automessage-hook-select" name="hook" style="width: 40%;">';
 			switch($type) {
-				case 'blog':	echo '<option value="wpmu_new_blog">';
-								echo __('Create new blog','automessage');
-								echo '</option>';
-								break;
+				case 'blog':	
+					echo '<option value="wpmu_new_blog"';
+					echo '>';
+					echo __('Create new blog','automessage');
+					echo '</option>';
+				break;
 
-				case 'user':	echo '<option value="wpmu_new_user">';
-								echo __('Create new user','automessage');
-								echo '</option>';
-								break;
+				case 'user':
+					echo '<option value="wpmu_new_user"';
+					echo '>';
+					echo __('Create new user','automessage');
+					echo '</option>';
+
+					global $automessage_custom_user_hooks;
+					foreach ($automessage_custom_user_hooks as $hook => $custom_hook_details) {
+						echo '<option value="'.$hook.'"';
+						echo '>';
+						echo $custom_hook_details['action_nicename'];
+						echo '</option>';
+					}
+				break;
 			}
 		echo '</select>';
 
@@ -1086,10 +1217,39 @@ class automessage {
 		echo '%usernicename%<br/>';
 		echo '%sitename%<br/>';
 		echo "%siteurl%<br/>";
-
+		echo '<div id="automessage-instructions-aditional"></div>';
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
+		
+		global $email_newsletter;
+
+		if(isset($email_newsletter) && is_object($email_newsletter)) {
+			$newsletters = $email_newsletter->get_newsletters(array('orderby' => 'newsletter_id'), 0, 0);
+			$current_newsletter = (isset($metadata['_automessage_enewsletter'][0]) && is_numeric($metadata['_automessage_enewsletter'][0])) ? $metadata['_automessage_enewsletter'][0] : 0;
+
+			echo '<tr class="form-field form-required">';
+			echo '<th style="" scope="row" valign="top">' . __('eNewsletter','automessage') . '</th>';
+			echo '<td valign="top">';
+
+			echo '<select name="enewsletter" style="width: 50%; float: left;">';
+			echo '<option value="0" '.selected( $current_newsletter, 0, false).'>'.__('Disabled','automessage').'</option>';
+			foreach ($newsletters as $newsletter) {
+				echo '<option value="'.$newsletter['newsletter_id'].'" '.selected( $current_newsletter, $newsletter['newsletter_id'], false);
+				echo '>';
+				echo $newsletter['newsletter_id'];
+				echo !empty($newsletter['subject']) ? ' - '.$newsletter['subject'] : '';
+				echo '</option>';
+			}
+			echo '</select>';
+
+			echo '<div class="instructions" style="float: left; width: 40%; margin-left: 10px;">';
+			echo sprintf(__('Alternatively, you can choose newsletter to be sent instead of message above. Newsletters can be managed <a href="%s">here</a>','automessage'), admin_url('admin.php?page=newsletters'));
+			echo '</div>';
+
+			echo '</td>';
+			echo '</tr>';
+		}
 
 		echo '</table>';
 
@@ -1136,7 +1296,6 @@ class automessage {
 
 		if($results) {
 			$bgcolor = $class = '';
-			$lasthook = '';
 
 			foreach($results as $result) {
 
@@ -1155,19 +1314,19 @@ class automessage {
 				}
 
 				$class = ('alternate' == $class) ? '' : 'alternate';
-				if($lasthook != $hook) {
-					switch($hook) {
-						case 'wpmu_new_blog':	$title = __('Create new blog','automessage');
-												break;
 
-						case 'wpmu_new_user':	$title = __('Create new user','automessage');
-												break;
-					}
+				global $automessage_custom_user_hooks;
 
-					$lasthook = $hook;
-				} else {
-					$title = '&nbsp;';
+				$title = isset($automessage_custom_user_hooks[$hook]['action_nicename']) ? $automessage_custom_user_hooks[$hook]['action_nicename'] : '';
+
+				switch($hook) {
+					case 'wpmu_new_blog':	$title = __('Create new blog','automessage');
+											break;
+
+					case 'wpmu_new_user':	$title = __('Create new user','automessage');
+											break;
 				}
+
 				echo '<tr>';
 				echo '<th scope="row" class="check-column" >';
 				echo '<input type="checkbox" id="schedule_' . $result->ID . '" name="allschedules[]" value="' . $result->ID .'" />';
@@ -1187,7 +1346,7 @@ class automessage {
 				} else {
 					$actions[] = '<a href="?page=' . $page . '&amp;action=unpauseaction&amp;id=' . $result->ID . '" title="' . __('Unpause this message','automessage') . '">' . __('Unpause','automessage') . '</a>';
 				}
-				$actions[] = '<a href="?page=' . $page . '&amp;action=process' . $type . 'action&amp;id=' . $result->ID . '" title="' . __('Process this message','automessage') . '">' . __('Process','automessage') . '</a>';
+				$actions[] = '<a href="?page=' . $page . '&amp;action=process' . $type . 'action&amp;id=' . $result->ID . '&amp;hook=' . urlencode($hook) . '" title="' . __('Process this message','automessage') . '">' . __('Process','automessage') . '</a>';
 				$actions[] = '<a href="?page=' . $page . '&amp;action=deleteaction&amp;id=' . $result->ID . '" title="' . __('Delete this message','automessage') . '">' . __('Delete','automessage') . '</a>';
 
 				echo '<div class="row-actions">';
@@ -1213,8 +1372,9 @@ class automessage {
 				echo '</td>';
 
 				echo '<td scope="row" valign="top">';
-				$type = ($hook == 'wpmu_new_user') ? 'user' : 0;
-				echo intval($this->get_queued_for_message( $result->ID, $type) );
+				//compatibility thing
+				$hook = ($hook == 'wpmu_new_user') ? 'user' : $hook;
+				echo intval($this->get_queued_for_message( $result->ID, $hook) );
 				echo '</td>';
 
 				echo '</tr>' . "\n";
@@ -1409,17 +1569,17 @@ class automessage {
 
 	}
 
-	function get_automessage_users_to_process( $time = false, $type = 'user' ) {
+	function get_automessage_users_to_process( $time = false, $hook = 'user' ) {
 
 		if(!$time) {
 			return;
 		}
 
 		$blog_id = get_current_blog_id();
-		$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+		$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value <= %s", '_automessage_run_' . $type . '_action' . $blog_id, (int) $time );
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value <= %s", '_automessage_run_' . $hook . '_action' . $blog_id, (int) $time );
 
 		$users = $this->db->get_col( $sql );
 
@@ -1427,17 +1587,17 @@ class automessage {
 
 	}
 
-	function get_forced_automessage_users_to_process( $schedule_id = false, $type = 'user' ) {
+	function get_forced_automessage_users_to_process( $schedule_id = false, $hook = 'user' ) {
 
 		if(!$schedule_id) {
 			return;
 		}
 
 		$blog_id = get_current_blog_id();
-		$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+		$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_' . $type . '_action'.$blog_id, (int) $schedule_id );
+		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_' . $hook . '_action'.$blog_id, (int) $schedule_id );
 
 		$users = $this->db->get_col( $sql );
 
@@ -1445,138 +1605,89 @@ class automessage {
 
 	}
 
-	function process_user_automessage() {
+	function process_automessage() {
+		global $automessage_custom_user_hooks;
 
-		// Our starting time
-		$timestart = time();
+		$hooks = array_merge(array('user', 'blog'), array_keys($automessage_custom_user_hooks));
 
-		// grab the users
-		$users = $this->get_automessage_users_to_process( $timestart );
+		foreach ($hooks as $hook) {
+			//compatibility thing as real hook is not the same on default actions
+			$real_hook = $hook == 'user' ? 'wpmu_new_user' : ($hook == 'blog' ? 'wpmu_new_blog' : $hook);
 
-		//Or processing limit
-		$timelimit = 5; // max seconds for processing
+			// Our starting time
+			$timestart = time();
 
-		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
-		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
-			$lastprocessing = strtotime('-30 minutes');
-			update_automessage_option('automessage_processing', $lastprocessing);
-		}
+			// grab the users
+			$users = $this->get_automessage_users_to_process( $timestart, $hook );
 
-		if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
-			update_automessage_option('automessage_processing', time());
+			//Or processing limit
+			$timelimit = 5; // max seconds for processing
 
-			foreach( (array) $users as $user_id) {
-
-				if(time() > $timestart + $timelimit) {
-					if($this->debug) {
-						// time out
-						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
-					}
-					break;
-				}
-
-				// Create the user - get the message they are on and then process it
-				$theuser = new Auto_User( $user_id );
-				$action = $this->get_action( (int) $theuser->current_action() );
-
-				if(!empty($action)) {
-					$theuser->send_message( $action->post_title, $action->post_content );
-					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
-						$next = $this->get_action_after( $action->ID, 'user' );
-					}
-
-					if(!empty($next)) {
-						$days = (int) $next->menu_order - (int) $action->menu_order;
-						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days') );
-					} else {
-						$theuser->clear_subscriptions( 'user' );
-					}
-				}
-				//consider deleting meta data for user 
-
+			$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
+			if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
+				$lastprocessing = strtotime('-30 minutes');
+				update_automessage_option('automessage_processing', $lastprocessing);
 			}
-		} else {
-			if(isset($this->debug) && $this->debug) {
-				// empty list or not processing
-			}
-		}
 
-		if(!empty($this->errors)) {
-			//$this->record_error();
-		}
+			if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
+				update_automessage_option('automessage_processing', time());
 
-	}
+				foreach( (array) $users as $user_id) {
 
-	function process_blog_automessage() {
-
-		// Our starting time
-		$timestart = time();
-
-		// grab the users
-		$users = $this->get_automessage_users_to_process( $timestart, 'blog' );
-
-		//Or processing limit
-		$timelimit = 5; // max seconds for processing
-
-		$lastprocessing = get_automessage_option('automessage_processing', strtotime('-1 week'));
-		if($lastprocessing == 'yes' || $lastprocessing == 'no' || $lastprocessing == 'np') {
-			$lastprocessing = strtotime('-30 minutes');
-			update_automessage_option('automessage_processing', $lastprocessing);
-		}
-
-		if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
-			update_automessage_option('automessage_processing', time());
-
-			foreach( (array) $users as $user_id) {
-
-				if(time() > $timestart + $timelimit) {
-					if($this->debug) {
-						// time out
-						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
+					if(time() > $timestart + $timelimit) {
+						if($this->debug) {
+							// time out
+							$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
+						}
+						break;
 					}
-					break;
+
+					// Create the user - get the message they are on and then process it
+					$theuser = new Auto_User( $user_id );
+					$action = $this->get_action( (int) $theuser->current_action( $hook ) );
+
+					if(!empty($action)) {
+						$enewsletter = get_post_meta( $action->ID, '_automessage_enewsletter', true );
+						$extra = !empty($enewsletter) ? array('enewsletter' => $enewsletter) : array();
+						$theuser->send_message( $action->post_title, $action->post_content, $extra );
+
+						if(get_metadata('post', $action->ID, '_automessage_hook', true) == $real_hook) {
+							$next = $this->get_action_after( $action->ID, $hook );
+						}
+
+						if(!empty($next)) {
+							$days = (int) $next->menu_order - (int) $action->menu_order;
+							$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), $hook );
+						} else {
+							$theuser->clear_subscriptions( $hook );
+						}
+					}
+
 				}
-
-				// Create the user - get the message they are on and then process it
-				$theuser = new Auto_User( $user_id );
-				$action = $this->get_action( (int) $theuser->current_action( 'blog' ) );
-
-				if(!empty($action)) {
-					$theuser->send_message( $action->post_title, $action->post_content );
-					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'blog') {
-						$next = $this->get_action_after( $action->ID, 'blog' );
-					}
-
-					if(!empty($next)) {
-						$days = (int) $next->menu_order - (int) $action->menu_order;
-						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), 'blog' );
-					} else {
-						$theuser->clear_subscriptions( 'blog' );
-					}
+			} else {
+				if(isset($this->debug) && $this->debug) {
+					// empty list or not processing
 				}
-
 			}
-		} else {
-			if(isset($this->debug) && $this->debug) {
-				// empty list or not processing
+
+			if(!empty($this->errors)) {
+				//$this->record_error();
 			}
 		}
-
-		if(!empty($this->errors)) {
-			//$this->record_error();
-		}
-
 	}
 
 
 
-	function force_process_user($schedule_id) {
+	function force_process($hook, $schedule_id) {
+		//compatibility thing as real hook is not the same on default actions
+		$hook = ($hook == 'wpmu_new_user') ? 'user' : $hook;
+		$real_hook = $hook == 'user' ? 'wpmu_new_user' : ($hook == 'blog' ? 'wpmu_new_blog' : $hook);
 
 		// Our starting time
 		$timestart = time();
 
 		// grab the users
-		$users = $this->get_forced_automessage_users_to_process( $schedule_id, 'user' );
+		$users = $this->get_forced_automessage_users_to_process( $schedule_id, $hook );
 
 		//Or processing limit
 		$timelimit = 5; // max seconds for processing
@@ -1597,75 +1708,22 @@ class automessage {
 
 				// Create the user - get the message they are on and then process it
 				$theuser = new Auto_User( $user_id );
-				$action = $this->get_action( (int) $theuser->current_action( 'user' ) );
+				$action = $this->get_action( (int) $theuser->current_action( $hook ) );
 
 				if(!empty($action)) {
-
-					$theuser->send_message( $action->post_title, $action->post_content );
-					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'user') {
-						$next = $this->get_action_after( $action->ID, 'user' );
+					$enewsletter = get_post_meta( $action->ID, '_automessage_enewsletter', true );
+					$extra = !empty($enewsletter) ? array('enewsletter' => $enewsletter) : array();
+					$theuser->send_message( $action->post_title, $action->post_content, $extra );
+					
+					if(get_metadata('post', $action->ID, '_automessage_hook', true) == $real_hook) {
+						$next = $this->get_action_after( $action->ID, $hook );
 					}
 
 					if(!empty($next)) {
 						$days = (int) $next->menu_order - (int) $action->menu_order;
-						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), 'user' );
+						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), $hook );
 					} else {
-						$theuser->clear_subscriptions( 'user' );
-					}
-				}
-
-			}
-		} else {
-			if(isset($this->debug) && $this->debug) {
-				// empty list or not processing
-			}
-		}
-
-		if(!empty($this->errors)) {
-			//$this->record_error();
-		}
-	}
-
-	function force_process_blog($schedule_id) {
-
-		// Our starting time
-		$timestart = time();
-
-		// grab the users
-		$users = $this->get_forced_automessage_users_to_process( $schedule_id, 'blog' );
-
-		//Or processing limit
-		$timelimit = 3; // max seconds for processing
-
-		if(!empty($users)) {
-
-			update_automessage_option('automessage_processing', time());
-
-			foreach( (array) $users as $user_id) {
-
-				if(time() > $timestart + $timelimit) {
-					if($this->debug) {
-						// time out
-						$this->errors[] = sprintf(__('Notice: Processing stopped due to %d second timeout.','automessage'), $timelimit);
-					}
-					break;
-				}
-
-				// Create the user - get the message they are on and then process it
-				$theuser = new Auto_User( $user_id );
-				$action = $this->get_action( (int) $theuser->current_action( 'blog' ) );
-
-				if(!empty($action)) {
-					$theuser->send_message( $action->post_title, $action->post_content );
-					if(get_metadata('post', $action->ID, '_automessage_level', true) == 'blog') {
-						$next = $this->get_action_after( $action->ID, 'blog' );
-					}
-
-					if(!empty($next)) {
-						$days = (int) $next->menu_order - (int) $action->menu_order;
-						$theuser->schedule_message( $next->ID, strtotime('+' . $days . ' days'), 'blog' );
-					} else {
-						$theuser->clear_subscriptions( 'blog' );
+						$theuser->clear_subscriptions( $hook );
 					}
 				}
 				//consider deleting meta data for user 

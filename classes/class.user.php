@@ -33,7 +33,7 @@ if(!class_exists('Auto_User')) {
 			$this->site_id = (int) $site_id;
 		}
 
-		function send_message( $subject, $message ) {
+		function send_message( $subject, $message, $extra = array() ) {
 
 			if(!empty($this->user_email)) {
 
@@ -81,16 +81,36 @@ if(!class_exists('Auto_User')) {
 
 				$replacements = apply_filters('automessage_replacements', $replacements);
 
-				if(!empty($message)) {
+				if(!empty($message) || (isset($extra['enewsletter']) && is_numeric($extra['enewsletter']))) {
 					$subject = stripslashes($subject);
-					$msg = stripslashes($message);
 
-					// Add in the unsubscribe text at the bottom of the message
-					$msg .= "\n\n"; // Two blank lines
-					$msg .= "-----\n"; // Footer marker
-					$msg .= __('To stop receiving messages from %sitename% click on the following link: %siteurl%/unsubscribe/','automessage');
-					// Add in the user id
-					$msg .= md5($this->ID . '16224');
+					if(isset($extra['enewsletter']) && is_numeric($extra['enewsletter'])) {
+						global $email_newsletter;
+
+						add_filter('email_newsletter_make_email_view_link_text', create_function('', 'return "";'));
+						$msg = $email_newsletter->make_email_body( $extra['enewsletter'] );
+						$msg = $email_newsletter->personalise_email_body($msg, 0, $this->ID, 0, 0, 0, array('UNSUBSCRIBE_URL' => '%siteurl%/unsubscribe/'.md5($this->ID . '16224'), 'OPENED_TRACKER' => ''));
+					}
+					else {
+						$msg = stripslashes($message);
+
+						// Add in the unsubscribe text at the bottom of the message
+						$msg .= "\n\n"; // Two blank lines
+						$msg .= "-----\n"; // Footer marker
+						$msg .= __('To stop receiving messages from %sitename% click on the following link: %siteurl%/unsubscribe/','automessage');
+						// Add in the user id
+						$msg .= md5($this->ID . '16224');
+					}
+
+					//check if it has tags... if it does, its HTML!
+					if(strlen($msg) != strlen(strip_tags($msg)) && 1 != 0) {
+						//enable HTML in message
+						add_filter('wp_mail_content_type',create_function('', 'return "text/html"; '));
+
+						//replace text line breaks with html ones
+						if(!isset($extra['enewsletter']) || !is_numeric($extra['enewsletter']))
+							$msg = str_replace("\n", '<br/>', $msg);
+					}
 
 					$find = array_keys($replacements);
 					$replace = array_values($replacements);
@@ -103,7 +123,6 @@ if(!class_exists('Auto_User')) {
 					$res = @wp_mail( $this->user_email, $subject, $msg, $header );
 
 					do_action( 'automessage_sent_to', $this->ID);
-
 				}
 
 			}
@@ -143,11 +162,11 @@ if(!class_exists('Auto_User')) {
 			return $res;
 		}
 
-		function current_action( $type = 'user') {
+		function current_action( $hook = 'user') {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+			$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
-			$action = get_user_meta( $this->ID, '_automessage_on_' . $type . '_action'.$blog_id, true );
+			$action = get_user_meta( $this->ID, '_automessage_on_' . $hook . '_action'.$blog_id, true );
 
 			if(empty($action)) {
 				return false;
@@ -160,11 +179,11 @@ if(!class_exists('Auto_User')) {
 			}
 		}
 
-		function on_action( $type = 'user', $blog_id = 0) {
+		function on_action( $hook = 'user', $blog_id = 0) {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+			$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
-			$action = get_user_meta( $this->ID, '_automessage_on_' . $type . '_action'.$blog_id, true );
+			$action = get_user_meta( $this->ID, '_automessage_on_' . $hook . '_action'.$blog_id, true );
 
 			if(empty($action)) {
 				return false;
@@ -173,22 +192,22 @@ if(!class_exists('Auto_User')) {
 			}
 		}
 
-		function schedule_message( $message_id, $timestamp, $type = 'user' ) {
+		function schedule_message( $message_id, $timestamp, $hook = 'user' ) {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+			$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
-			update_user_meta($this->ID, '_automessage_on_' . $type . '_action'.$blog_id, (int) $message_id);
-			update_user_meta($this->ID, '_automessage_run_' . $type . '_action'.$blog_id, (int) $timestamp);
+			update_user_meta($this->ID, '_automessage_on_' . $hook . '_action'.$blog_id, (int) $message_id);
+			update_user_meta($this->ID, '_automessage_run_' . $hook . '_action'.$blog_id, (int) $timestamp);
 
 		}
 
-		function clear_subscriptions( $type = 'user') {
+		function clear_subscriptions( $hook = 'user') {
 			$blog_id = get_current_blog_id();
-			$blog_id = ($type == 'user' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
+			$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
-			if($this->current_action( $type )) {
-				delete_user_meta($this->ID, '_automessage_on_' . $type . '_action'.$blog_id);
-				delete_user_meta($this->ID, '_automessage_run_' . $type . '_action'.$blog_id);
+			if($this->current_action( $hook )) {
+				delete_user_meta($this->ID, '_automessage_on_' . $hook . '_action'.$blog_id);
+				delete_user_meta($this->ID, '_automessage_run_' . $hook . '_action'.$blog_id);
 			}
 
 
