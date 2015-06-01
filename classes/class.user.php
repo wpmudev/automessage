@@ -192,13 +192,14 @@ if(!class_exists('Auto_User')) {
 			}
 		}
 
-		function schedule_message( $message_id, $timestamp, $hook = 'user' ) {
+		function schedule_message( $message_id, $timestamp, $hook = 'user', $extra = false ) {
 			$blog_id = get_current_blog_id();
 			$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 			update_user_meta($this->ID, '_automessage_on_' . $hook . '_action'.$blog_id, (int) $message_id);
 			update_user_meta($this->ID, '_automessage_run_' . $hook . '_action'.$blog_id, (int) $timestamp);
-
+			if($extra !== false)
+				update_user_meta($this->ID, '_automessage_extra_' . $hook . '_action'.$blog_id, $extra);
 		}
 
 		function clear_subscriptions( $hook = 'user') {
@@ -208,9 +209,8 @@ if(!class_exists('Auto_User')) {
 			if($this->current_action( $hook )) {
 				delete_user_meta($this->ID, '_automessage_on_' . $hook . '_action'.$blog_id);
 				delete_user_meta($this->ID, '_automessage_run_' . $hook . '_action'.$blog_id);
+				delete_user_meta($this->ID, '_automessage_extra_' . $hook . '_action'.$blog_id);
 			}
-
-
 		}
 
 		function has_message_scheduled( $message_id ) {

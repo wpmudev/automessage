@@ -510,14 +510,8 @@ class automessage {
 
 		foreach($automessage_custom_user_hooks as $custom_hook_action => $custom_hook_details) {
 			//check if required args are there
-			if(!is_numeric($custom_hook_action) && isset($custom_hook_details['action_nicename'])) {
-				if(isset($custom_hook_details['arg_with_user_id']) && is_numeric($custom_hook_details['arg_with_user_id']))
-					$arg_with_user_id = $custom_hook_details['arg_with_user_id'];
-				else
-					$arg_with_user_id = 0;
-
-				add_action($custom_hook_action, array(&$this,'add_custom_message'), 10, $arg_with_user_id);
-			}
+			if(!is_numeric($custom_hook_action) && isset($custom_hook_details['action_nicename']))
+				add_action($custom_hook_action, array(&$this,'add_custom_message'), 10);
 			else
 				continue;
 		}
@@ -533,6 +527,7 @@ class automessage {
 		if(isset($custom_hook_details['arg_with_user_id']) && is_numeric($custom_hook_details['arg_with_user_id'])) {
 			$args = func_get_args();
 			$user_ids = $args[$custom_hook_details['arg_with_user_id']-1];
+			$extra = isset($args[$custom_hook_details['arg_with_extra_data']-1]) ? $args[$custom_hook_details['arg_with_extra_data']-1] : false;
 			if(!is_array($user_ids))
 				$user_ids = array($user_ids);
 
@@ -551,10 +546,10 @@ class automessage {
 				if(!empty($action) && $onaction === false ) {
 					if($action->menu_order == 0) {
 						// Immediate response - we no longer want to send immediately, rather wait for 5 minutes in case the user also creates a blog
-						$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), $hook );
+						$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), $hook, $extra );
 					} else {
 						// Schedule response
-						$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), $hook );
+						$theuser->schedule_message( $action->ID, strtotime('+' . $action->menu_order . ' days'), $hook, $extra );
 					}
 				}
 			}
@@ -630,7 +625,7 @@ class automessage {
 
 				if(!empty($action) && $onaction === false ) {
 					if($action->menu_order == 0) {
-						// Immediate response - we no longer want to send immediately, rather wait for 15 minutes in case the user also creates a blog
+						// Immediate response - we no longer want to send immediately, rather wait for 5(15) minutes in case the user also creates a blog
 						$theuser->schedule_message( $action->ID, strtotime('+5 minutes'), 'user' );
 
 						// Commented out for now as moved to a 15 minute wait for first message
@@ -1579,9 +1574,9 @@ class automessage {
 		$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value <= %s", '_automessage_run_' . $hook . '_action' . $blog_id, (int) $time );
+		$sql = $this->db->prepare( "SELECT user_id, meta_key FROM {$this->db->usermeta} WHERE meta_key LIKE %s AND meta_value <= %s", '_automessage_run_' . $hook . '_action' . $blog_id . '%', (int) $time );
 
-		$users = $this->db->get_col( $sql );
+		$users = $this->db->get_results( $sql );
 
 		return $users;
 
@@ -1597,9 +1592,9 @@ class automessage {
 		$blog_id = ($hook != 'blog' && $blog_id != 1 && $blog_id != '') ? '_'.$blog_id : '';
 
 		//update_usermeta($this->ID, '_automessage_run_action', (int) $timestamp);
-		$sql = $this->db->prepare( "SELECT user_id FROM {$this->db->usermeta} WHERE meta_key = %s AND meta_value = %s", '_automessage_on_' . $hook . '_action'.$blog_id, (int) $schedule_id );
+		$sql = $this->db->prepare( "SELECT user_id, meta_key FROM {$this->db->usermeta} WHERE meta_key LIKE %s AND meta_value = %s", '_automessage_on_' . $hook . '_action'.$blog_id . '%', (int) $schedule_id );
 
-		$users = $this->db->get_col( $sql );
+		$users = $this->db->get_results( $sql );
 
 		return $users;
 
@@ -1632,7 +1627,9 @@ class automessage {
 			if(!empty($users) && $lastprocessing <= strtotime('-30 minutes')) {
 				update_automessage_option('automessage_processing', time());
 
-				foreach( (array) $users as $user_id) {
+				foreach( (array) $users as $user) {
+					$user_id = $user['user_id'];
+					$hook_id = $user['meta_key'];
 
 					if(time() > $timestart + $timelimit) {
 						if($this->debug) {
