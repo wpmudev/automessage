@@ -767,7 +767,7 @@ class automessage {
 			return false;
 		}
 
-		$result = &get_post($id);
+		$result = get_post($id);
 
 		if( !empty($result) ) {
 			return $result;

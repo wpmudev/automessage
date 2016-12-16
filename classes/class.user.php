@@ -99,7 +99,12 @@ if(!class_exists('Auto_User')) {
 					$subject = preg_replace($find, $replace, $subject);
 
 					// Set up the from address
-					$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . str_replace('http://', '', $replacements['/%siteurl%/']) . '>';
+					$from_url = parse_url($replacements['/%siteurl%/']);
+					$from_url = str_replace('www.', '', $from_url['host']);
+
+					$header = '';
+					if($from_url)
+						$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . $from_url . '>';
 					$res = @wp_mail( $this->user_email, $subject, $msg, $header );
 
 					do_action( 'automessage_sent_to', $this->ID);
@@ -138,7 +143,13 @@ if(!class_exists('Auto_User')) {
 
 			$replacements = apply_filters('automessage_replacements', $replacements);
 
-			$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . str_replace('http://', '', $replacements['/%siteurl%/']) . '>';
+			// Set up the from address
+			$from_url = parse_url($replacements['/%siteurl%/']);
+			$from_url = str_replace('www.', '', $from_url['host']);
+
+			$header = '';
+			if($from_url)
+				$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . $from_url . '>';
 			$res = @wp_mail( $this->user_email, __("Unsubscribe request processed", 'automessage'), __("Your unsubscribe request has been processed and you have been removed from our mailing list.\n\nThank you\n\n", 'automessage'), $header );
 			return $res;
 		}
