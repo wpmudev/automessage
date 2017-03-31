@@ -94,25 +94,41 @@ if(!class_exists('Auto_User')) {
 
 					$find = array_keys($replacements);
 					$replace = array_values($replacements);
-
+					
 					$msg = preg_replace($find, $replace, $msg);
 					$subject = preg_replace($find, $replace, $subject);
 
 					// Set up the from address
 					$from_url = parse_url($replacements['/%siteurl%/']);
 					$from_url = str_replace('www.', '', $from_url['host']);
-
+					
+					//setup html and plain text email bodies
+					add_filter( 'wp_mail_content_type', array($this, 'automessage_set_content_type') );
+					add_action( 'phpmailer_init', array($this, 'automessage_text_body') );
+					
 					$header = '';
 					if($from_url)
 						$header = 'From: "' . $replacements['/%sitename%/'] . '" <noreply@' . $from_url . '>';
 					$res = @wp_mail( $this->user_email, $subject, $msg, $header );
 
 					do_action( 'automessage_sent_to', $this->ID);
+					
+					remove_filter( 'wp_mail_content_type', array($this,'automessage_set_content_type') );
+					remove_action( 'phpmailer_init', array($this, 'automessage_text_body') );
 
 				}
 
 			}
 
+		}
+		
+		function automessage_set_content_type(){
+			return "text/html";
+		}
+
+		
+		function automessage_text_body($phpmailer) {
+			 $phpmailer->AltBody = strip_tags($phpmailer->Body);
 		}
 
 		function send_unsubscribe() {
