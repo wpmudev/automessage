@@ -7,7 +7,7 @@ if(!class_exists('Auto_User')) {
 		var $blog_id = false;
 		var $site_id = false;
 
-		function Auto_User( $id, $name = '' ) {
+		function __construct( $id, $name = '' ) {
 
 			global $wpdb, $blog_id, $site_id;
 
