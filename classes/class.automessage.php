@@ -978,6 +978,8 @@ class automessage {
 		echo '<br /><br />';
 		echo '%blogname%<br />';
 		echo '%blogurl%<br />';
+		echo '%firstname%<br/>';
+		echo '%lastname%<br/>';
 		echo '%username%<br />';
 		echo '%usernicename%<br/>';
 		echo '%sitename%<br/>';
@@ -1077,6 +1079,8 @@ class automessage {
 		echo '<br /><br />';
 		echo '%blogname%<br />';
 		echo '%blogurl%<br />';
+		echo '%firstname%<br/>';
+		echo '%lastname%<br/>';
 		echo '%username%<br />';
 		echo '%usernicename%<br/>';
 		echo '%sitename%<br/>';
