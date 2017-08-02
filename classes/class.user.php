@@ -47,13 +47,17 @@ if(!class_exists('Auto_User')) {
 					$replacements = array(	"/%blogname%/" 	=> 	get_blog_option( $blog_id,'blogname'),
 											"/%blogurl%/"	=>	untrailingslashit(get_blog_option( $blog_id,'home')),
 											"/%username%/"	=>	$this->user_login,
-											"/%usernicename%/"	=>	$this->user_nicename
+											"/%usernicename%/"	=>	$this->user_nicename,
+											"/%firstname%/"	=>	$this->user_firstname,
+											"/%lastname%/"	=>	$this->user_lastname
 										);
 				} else {
 					$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
 											"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
 											"/%username%/"	=>	$this->user_login,
-											"/%usernicename%/"	=>	$this->user_nicename
+											"/%usernicename%/"	=>	$this->user_nicename,
+											"/%firstname%/"	=>	$this->user_firstname,
+											"/%lastname%/"	=>	$this->user_lastname
 										);
 				}
 
@@ -120,7 +124,9 @@ if(!class_exists('Auto_User')) {
 			$replacements = array(	"/%blogname%/" 	=> 	get_option('blogname'),
 									"/%blogurl%/"	=>	untrailingslashit(get_option('home')),
 									"/%username%/"	=>	$this->user_login,
-									"/%usernicename%/"	=>	$this->user_nicename
+									"/%usernicename%/"	=>	$this->user_nicename,
+									"/%firstname%/"	=>	$this->user_firstname,
+									"/%lastname%/"	=>	$this->user_lastname
 								);
 
 			if(function_exists('get_site_details')) {
