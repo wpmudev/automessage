@@ -1,0 +1,107 @@
+Plugin Name: Automessage
+
+Change Log:
+----------------------------------------------------------------------
+
+
+2.4.5
+----------------------------------------------------------------------
+- Improvement: Added first name and last name placeholders
+
+2.4.4
+----------------------------------------------------------------------
+- Small updates
+- Update deprecated function
+
+2.4.3
+----------------------------------------------------------------------
+- Updated WPMU DEV Dashboard Notification
+- Fixed email sending issues related to "www." in site url
+
+2.4.2
+----------------------------------------------------------------------
+- Fixed possible rewrite rule issues
+- Fixed problems caused by plugin translation
+
+2.4.1
+----------------------------------------------------------------------
+- Fixed problem with automatic sending of user level messages on subsite
+
+2.4
+----------------------------------------------------------------------
+- Changed behavior so new user automessages configured on sub site are sent only to users registering on this sub site (New user automessages configured for main site are still sent to all new users in network)
+- Disabled adding new blog automessages on sub sites and non multisite installations
+
+2.3.4
+----------------------------------------------------------------------
+- fixed flush rewrite error
+
+2.3.3
+----------------------------------------------------------------------
+- added unsubscribe message
+- fixed rules flushing on install
+
+2.3.1
+----------------------------------------------------------------------
+- Added Queue action link to user and site admin pages to add old users to automessage queue
+- Fixed multiple unsubscribe messages being sent
+- Updated method of loading language files
+- Updated language file
+- Update dashboard notification class
+
+2.3
+----------------------------------------------------------------------
+- Changed "immediate" user email delay to 5 minutes, to give the user time to create a blog and switch to that path
+- Changed method of detecting the admin user of a newly created blog
+- Add hooks for future update to allow addition of better reporting and email log.
+
+2.2
+----------------------------------------------------------------------
+- Removed warnings and depreciated function calls
+- Updated admin styling for WP3.5
+- Changed dash notification method
+
+2.1.3
+----------------------------------------------------------------------
+- Added check for existence of method on roles
+
+2.1.2
+----------------------------------------------------------------------
+- Set up default to only add a user to one queue - user queue if only a user account created or blog queue if a user and blog created.
+- Setting AUTOMESSAGE_SINGLE_PATH to false switches this new behaviour off
+
+2.1.1
+----------------------------------------------------------------------
+- Fixed spelling errors
+- Added strings that weren’t set for translation
+- Updated language file
+
+2.1
+----------------------------------------------------------------------
+- Fixed blog message sending
+- Fixed forced processing for user and blog messages
+- Changed styling of edit form
+- Change styling of add new button
+- Removed bulk process button from user and blog admin pages
+
+2.0.4
+----------------------------------------------------------------------
+- Fixed translation file location
+- Fixed blog level message processing
+- Fixed queue count for message admin level information.
+
+2.0.3
+----------------------------------------------------------------------
+- WP3.2 compatibility update
+
+1.0.2
+----------------------------------------------------------------------
+- WPMU 2.8.2 Compatible
+
+1.0.1
+----------------------------------------------------------------------
+- WPMU 2.7 Compatible
+
+1.0
+----------------------------------------------------------------------
+- Initial release
