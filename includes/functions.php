@@ -171,8 +171,7 @@ function AM_movesitemessages() {
 			$message_id = AM_addaction('wpmu_new_blog', $action->subject, $action->message, $action->period, 'blog');
 
 			//transfer the users
-			$scheds = $wpdb->get_results( $wpdb->prepare("SELECT user_id, runon FROM {$wpdb->base_prefix}am_queue WHERE schedule_id = %d", $action->id) );
-
+			$scheds = $wpdb->get_results( $wpdb->prepare("SELECT user_id, runon FROM {$wpdb->base_prefix}am_queue WHERE schedule_id = {$action->id}") );
 			foreach((array) $scheds as $sched) {
 				update_user_meta($sched->user_id, '_automessage_run_action', $sched->runon);
 				update_user_meta($sched->user_id, '_automessage_on_action', $message_id);
