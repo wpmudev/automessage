@@ -1885,10 +1885,13 @@ class automessage
     function export_action($schedule_id = null)
     {
         if (isset($_GET['file'])) {
+            global $automessage_dir;
+            $dir = $automessage_dir . '/export/';
+            $path = $dir.$_GET['file'];
             header('Content-Type: application/octet-stream');
             header("Content-Transfer-Encoding: Binary");
-            header("Content-disposition: attachment; filename=\"" . basename($_GET['file']) . "\"");
-            readfile($_GET['file']);
+            header("Content-disposition: attachment; filename=\"" . basename($path) . "\"");
+            readfile($path);
             die;
         } else {
 
@@ -1904,7 +1907,7 @@ class automessage
             }
             $filename = 'am-' . time() . '.json';
             file_put_contents($dir . $filename, json_encode($message->to_array()));
-            return $dir . $filename;
+            return  $filename;
         }
     }
 
