@@ -440,7 +440,6 @@ class automessage
         switch ($action) {
 
             case 'addaction':
-                check_admin_referer('add-action');
                 if ($this->add_action()) {
                     wp_safe_redirect(remove_query_arg(array(
                         'action',
@@ -470,7 +469,6 @@ class automessage
                 ), add_query_arg('msg', $this->get_notification_message(4), wp_get_original_referer())));
                 break;
             case 'allmessages':
-                check_admin_referer($_POST['actioncheck']);
                 if (isset($_POST['allaction_delete'])) {
                     if (isset($_POST['allschedules'])) {
                         $allsscheds = $_POST['allschedules'];
@@ -550,12 +548,30 @@ class automessage
                 ), add_query_arg('msg', $this->get_notification_message(12), wp_get_original_referer())));
                 break;
             case 'updateaction':
-                check_admin_referer('update-action');
                 $this->update_action();
                 wp_safe_redirect(remove_query_arg(array(
                     'action',
                     'id'
                 ), add_query_arg('msg', $this->get_notification_message(13), wp_get_original_referer())));
+                break;
+            case 'exportaction':
+                if (isset($_GET['id'])) {
+                    $id   = addslashes($_GET['id']);
+                    $file = $this->export_action($id);
+                    wp_safe_redirect(remove_query_arg(array(
+                        'id'
+                    ), add_query_arg(array(
+                        'file' => $file
+                    ), wp_get_original_referer())));
+                } else {
+                    $this->export_action();
+                    wp_safe_redirect(remove_query_arg(array(
+                        'action',
+                        'file'
+                    ), add_query_arg(array(
+                        'msg' => $this->get_notification_message(15)
+                    ), wp_get_original_referer())));
+                }
                 break;
             case 'processuseraction':
                 $id = addslashes($_GET['id']);
@@ -637,6 +653,9 @@ class automessage
 
             case 14:
                 return __('The scheduled action has been processed', 'automessage');
+                break;
+            case 15:
+                return __('The scheduled action has been exported', 'automessage');
                 break;
         }
     }
@@ -1102,7 +1121,7 @@ class automessage
 
         echo '<div id="poststuff" class="metabox-holder">';
 ?>
-     <div class="postbox">
+    <div class="postbox">
             <h3 class="hndle" style='cursor:auto;'><span><?php
         _e('Edit Action', 'automessage');
 ?></span></h3>
@@ -1218,7 +1237,7 @@ class automessage
 
         echo '<div id="poststuff" class="metabox-holder">';
 ?>
-     <div class="postbox">
+    <div class="postbox">
             <h3 class="hndle" style='cursor:auto;'><span><?php
         _e('Add Action', 'automessage');
 ?></span></h3>
@@ -1403,7 +1422,7 @@ class automessage
                 }
                 $actions[] = '<a href="?page=' . $page . '&amp;action=process' . $type . 'action&amp;id=' . $result->ID . '" title="' . __('Process this message', 'automessage') . '">' . __('Process', 'automessage') . '</a>';
                 $actions[] = '<a href="?page=' . $page . '&amp;action=deleteaction&amp;id=' . $result->ID . '" title="' . __('Delete this message', 'automessage') . '">' . __('Delete', 'automessage') . '</a>';
-
+                $actions[] = '<a href="?page=' . $page . '&amp;action=exportaction&amp;id=' . $result->ID . '" title="' . __('Export message', 'automessage') . '">' . __('Export', 'automessage') . '</a>';
                 echo '<div class="row-actions">';
                 echo implode(' | ', $actions);
                 echo '</div>';
@@ -1454,7 +1473,7 @@ class automessage
         $debug = get_automessage_option('automessage_debug', true);
 
 ?>
-     <div class="postbox ">
+    <div class="postbox ">
             <h3 class="hndle"><span><?php
         _e('Automessage', 'automessage');
 ?></span></h3>
@@ -1474,7 +1493,7 @@ class automessage
         echo '</strong>';
         echo "</p>";
 ?>
-             <br class="clear">
+            <br class="clear">
             </div>
         </div>
         <?php
@@ -1483,7 +1502,7 @@ class automessage
     function handle_dash_panel()
     {
 ?>
-     <div class='wrap nosubsub'>
+    <div class='wrap nosubsub'>
             <div class="icon32" id="icon-index"><br></div>
             <h2><?php
         _e('Automessage dashboard', 'automessage');
@@ -1497,7 +1516,7 @@ class automessage
                         <?php
         do_action('automessage_dashboard_left');
 ?>
-                 </div>
+                </div>
                 </div>
 
                 <div style="width: 49%;" class="postbox-container">
@@ -1505,7 +1524,7 @@ class automessage
                         <?php
         do_action('automessage_dashboard_right');
 ?>
-                 </div>
+                </div>
                 </div>
 
                 <div style="display: none; width: 49%;" class="postbox-container">
@@ -1860,6 +1879,32 @@ class automessage
 
         if (!empty($this->errors)) {
             //$this->record_error();
+        }
+    }
+
+    function export_action($schedule_id = null)
+    {
+        if (isset($_GET['file'])) {
+            header('Content-Type: application/octet-stream');
+            header("Content-Transfer-Encoding: Binary");
+            header("Content-disposition: attachment; filename=\"" . basename($_GET['file']) . "\"");
+            readfile($_GET['file']);
+            die;
+        } else {
+
+            $message = get_post($schedule_id);
+            if (!$message) {
+                return false;
+            }
+
+            global $automessage_dir;
+            $dir = $automessage_dir . '/export/';
+            if (!is_dir($dir)) {
+                wp_mkdir_p($dir);
+            }
+            $filename = 'am-' . time() . '.json';
+            file_put_contents($dir . $filename, json_encode($message->to_array()));
+            return $dir . $filename;
         }
     }
 
